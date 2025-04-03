@@ -25,7 +25,9 @@ return new class extends Migration
                    ->references('id') 
                    ->on('cible_activites') 
                    ->onDelete('cascade'); // Suppression en cascade
+
             $table->timestamps();
+
         });
     }
 

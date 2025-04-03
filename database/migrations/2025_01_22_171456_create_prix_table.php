@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('designation');
             $table->integer('annee')->unique();
+            $table->date('date_ouverture');
+            $table->date('date_cloture_depot_dossier');
+            $table->date('date_cloture');
             $table->enum('etat', ['en_attente','ouvert', 'fermé'])->default('en_attente'); // État de la tâche
             $table->timestamps();
         });

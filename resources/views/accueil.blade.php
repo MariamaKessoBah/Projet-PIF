@@ -5,101 +5,138 @@
 
 @section('content')
 
-  <main class="main">
+<main class="main">
 
   <!-- Hero Section -->
-<section id="hero" class="hero section dark-background">
-  <div id="hero-carousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+  <section id="hero" class="hero section dark-background">
+      <div id="hero-carousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
 
-    <div class="carousel-item active">
-      <img src="assets/img/hero-carousel/hero-carousel-1.png" alt="">
-      <div class="carousel-container">
-        <h2 style="font-size: 40px;">Bienvenue à la plateforme dédiée au Prix de l'Inclusion Financière<br></h2>
-        <p>Un événement majeur célébrant les initiatives et innovations qui renforcent l'accès aux services financiers pour tous.</p>
-        <a href="#loginModal" data-bs-toggle="modal" class="btn-get-started">Participez</a>
+        <div class="carousel-item active">
+          <img src="assets/img/hero-carousel/hero-carousel-2.png" alt="">
+          <div class="carousel-container">
+            <h2 style="font-size: 40px;">Bienvenue à la plateforme dédiée au Prix de l'Inclusion Financière<br></h2>
+            <p>Un événement majeur célébrant les initiatives et innovations qui renforcent l'accès aux services financiers pour tous.</p>
+            <a href="#registerModal" data-bs-toggle="modal" class="btn-get-started">Participez</a>
+          </div>
+        </div><!-- End Carousel Item -->
+
+        <div class="carousel-item">
+          <img src="assets/img/hero-carousel/hero-carousel-3.png" alt="">
+          <div class="carousel-container">
+            <h2>Participez à une transformation durable</h2>
+            <p>Rejoignez-nous pour honorer les acteurs qui œuvrent à réduire les inégalités grâce à des solutions financières inclusives.</p>
+            <a href="#registerModal" data-bs-toggle="modal" class="btn-get-started">PARTICIPEZ</a>
+          </div>
+        </div><!-- End Carousel Item -->
+
+        {{-- <div class="carousel-item">
+          <img src="assets/img/hero-carousel/hero-carousel-3.png" alt="">
+          <div class="carousel-container">
+            <h2>Innovons ensemble pour un futur inclusif</h2>
+            <p>Découvrez des projets inspirants qui façonnent l'avenir de l'inclusion financière en mettant l'humain au cœur des initiatives.</p>
+            <a href="#loginModal" data-bs-toggle="modal" class="btn-get-started">Participez</a>
+          </div>
+        </div><!-- End Carousel Item --> --}}
+
+        <a class="carousel-control-prev" href="#hero-carousel" role="button" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon bi bi-chevron-left" aria-hidden="true"></span>
+        </a>
+
+        <a class="carousel-control-next" href="#hero-carousel" role="button" data-bs-slide="next">
+          <span class="carousel-control-next-icon bi bi-chevron-right" aria-hidden="true"></span>
+        </a>
+
+        <ol class="carousel-indicators"></ol>
+        
+      <!-- Barre déroulante d'informations -->
+      <div class="info-bar">
+        <div class="scrolling-text">
+          🎉 Nouveaux sur l'inclusion financière! | 🌟 La plateforme du prix du ministère de la microfinance sera opérationnelle bientôt ! | 📞 Contactez-nous au +221 77 123 45 67 pour plus d'informations !
+        </div>
       </div>
-    </div><!-- End Carousel Item -->
 
-    <div class="carousel-item">
-      <img src="assets/img/hero-carousel/hero-carousel-2.png" alt="">
-      <div class="carousel-container">
-        <h2>Participez à une transformation durable</h2>
-        <p>Rejoignez-nous pour honorer les acteurs qui œuvrent à réduire les inégalités grâce à des solutions financières inclusives.</p>
-        <a href="#loginModal" data-bs-toggle="modal" class="btn-get-started">PARTICIPEZ</a>
       </div>
-    </div><!-- End Carousel Item -->
 
-    <div class="carousel-item">
-      <img src="assets/img/hero-carousel/hero-carousel-3.png" alt="">
-      <div class="carousel-container">
-        <h2>Innovons ensemble pour un futur inclusif</h2>
-        <p>Découvrez des projets inspirants qui façonnent l'avenir de l'inclusion financière en mettant l'humain au cœur des initiatives.</p>
-        <a href="#loginModal" data-bs-toggle="modal" class="btn-get-started">Participez</a>
-      </div>
-    </div><!-- End Carousel Item -->
 
-    <a class="carousel-control-prev" href="#hero-carousel" role="button" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon bi bi-chevron-left" aria-hidden="true"></span>
-    </a>
+    </section><!-- /Hero Section -->
 
-    <a class="carousel-control-next" href="#hero-carousel" role="button" data-bs-slide="next">
-      <span class="carousel-control-next-icon bi bi-chevron-right" aria-hidden="true"></span>
-    </a>
+    <!-- Sidebar -->
+    @include('auth.login')
+    @include('auth.register')
 
-    <ol class="carousel-indicators"></ol>
     
-  <!-- Barre déroulante d'informations -->
-  <div class="info-bar">
-    <div class="scrolling-text">
-      🎉 Nouveaux sur l'inclusion financière! | 🌟 La plateforme du prix du ministère de la microfinance sera opérationnelle bientôt ! | 📞 Contactez-nous au +221 77 123 45 67 pour plus d'informations !
-    </div>
-  </div>
-
-  </div>
-
-
-</section><!-- /Hero Section -->
-
-<!-- Sidebar -->
-@include('auth.login')
-@include('auth.register')
-
-  
-    <!-- About Section -->
-    {{-- <section id="about" class="about section"> --}}
-
-    <!-- Mot du Directeur Section -->
+   <!-- Mot du Ministre Section -->
 <section id="mot-du-directeur" class="mot-du-directeur section">
   <div class="container" data-aos="fade-up">
     <div class="row align-items-center">
-      <!-- Photo du Directeur -->
-      {{-- <div class="col-lg-4 text-center mb-3 mb-lg-0">
-          <img src="assets/img/ministre.jpeg" alt="Photo du Directeur" class="img-fluid rounded-4 mb-4">
-      </div> --}}
-
       <div class="col-lg-3 text-center mb-3 mb-lg-0">
-          <img src="assets/img/ministre.jpeg" alt="Photo du Directeur" class="img-fluid rounded-4 mb-4" style="width: 350px; height: 350px;">
+        <img src="assets/img/ministre.jpeg" alt="Photo du Ministre" class="img-fluid rounded-4 mb-4" style="width: 350px; height: 350px;">
       </div>
-    
-      <!-- Texte du Mot du Directeur -->
+      
+      <!-- Texte du Mot du Ministre -->
       <div class="col-lg-9">
         <div class="directeur-content">
           <h2 class="section-title text-uppercase">Mot du Ministre</h2>
           <blockquote class="directeur-quote">
-            <p>
-              "Le Prix de l'Inclusion Financière est une célébration de l'innovation, de l'engagement et de la solidarité. 
-              Ensemble, nous avons le pouvoir de transformer des vies en rendant les services financiers accessibles à tous. 
-              Continuons de bâtir un avenir inclusif et durable pour notre communauté."
+            <p id="short-text" style="text-align: justify; ">
+              "<strong>Chers acteurs de l'inclusion financière,</strong><br><br> 
+              C'est avec une grande fierté que je lance le Prix du Ministre de la Microfinance et de l'Économie sociale et solidaire pour la Promotion de l'Inclusion financière.  
+              Ce prix s'inscrit pleinement dans les objectifs de notre <strong>Agenda national de transformation Sénégal 2050.</strong>  
+              En effet, l'inclusion financière est un pilier essentiel de ce plan ambitieux.  
+              Elle est le moteur de la croissance économique, de la réduction de la pauvreté et de l'autonomisation des populations...
             </p>
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#directeurModal">
+              Voir plus
+            </button>
           </blockquote>
           <p class="directeur-signature">
-            <strong>- Dr Alioune Badara Dione</strong>  
+            <strong>- Dr Alioune Badara Dione</strong>
           </p>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Modal Bootstrap -->
+<div class="modal fade" id="directeurModal" tabindex="-1" aria-labelledby="directeurModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="directeurModalLabel">Mot du Ministre</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          "<strong>Chers acteurs de l'inclusion financière,</strong><br><br>
+          C'est avec une grande fierté que je lance le <strong>Prix du Ministre de la Microfinance et de l'Économie sociale et solidaire pour la Promotion de l'Inclusion financière.</strong>  
+          Ce prix s'inscrit pleinement dans les objectifs de notre <strong>Agenda national de transformation Sénégal 2050.</strong><br><br>
+
+          En effet, l'inclusion financière est un pilier essentiel de ce plan ambitieux. Elle est le moteur de la croissance économique, de la réduction de la pauvreté et de l'autonomisation des populations, notamment les femmes et les jeunes.  
+          Ce prix vise à récompenser les initiatives les plus innovantes et les plus impactantes qui contribuent à rendre les services financiers accessibles à tous les Sénégalais.<br><br>  
+
+          Nous recherchons des projets qui mettent en œuvre des solutions innovantes pour l'accès au crédit dans les zones rurales, qui développent des produits financiers adaptés aux besoins spécifiques des femmes, ou qui utilisent les technologies numériques pour faciliter les transactions financières.<br><br>  
+
+          En récompensant ces initiatives, nous souhaitons non seulement mettre en lumière les acteurs qui œuvrent pour une inclusion financière plus inclusive, mais également encourager l'émergence de nouvelles solutions et de nouveaux partenariats.<br><br>  
+
+          Je suis convaincu que ce prix contribuera à renforcer l'écosystème de la microfinance au Sénégal et à accélérer la réalisation des objectifs de notre Agenda 2050.<br><br>
+          Je vous invite tous à participer à ce concours et à nous faire part de vos projets les plus prometteurs.<br><br>  
+
+          Je remercie les membres du comité de sélection, composé d'experts des différents sectoriels, qui auront la lourde tâche d'évaluer les candidatures et de désigner les lauréats.<br><br>  
+
+        </p>
+        <p class="highlighted-text">
+          « Ensemble, construisons une <strong>Économie sociale et solidaire</strong> et une <strong>Microfinance intégrées, inclusives et performantes</strong> pour un <strong>développement territorial durable</strong> dans un <strong>Sénégal souverain, juste et prospère</strong>. »
+        </p>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
      
 
@@ -219,13 +256,9 @@
           <div class="col-lg-7">
             <p>
               Les candidatures doivent être déposées avant la date limite mentionnée sur le site. Toute soumission après cette date ne sera pas prise en compte.
-            </div>
+          </div>
         </div><!-- End F.A.Q Item-->
       </div><!-- End F.A.Q Item-->
-
-
-
-      </div>
 
     </section><!-- /Faq Section -->
 
@@ -235,7 +268,6 @@
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
         <h2>Contact</h2>
-        {{-- <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p> --}}
       </div><!-- End Section Title -->
 
       <div class="container" data-aos="fade-up" data-aos-delay="100">
@@ -265,7 +297,7 @@
             <div class="info-item d-flex flex-column justify-content-center align-items-center" data-aos="fade-up" data-aos-delay="400">
               <i class="bi bi-envelope"></i>
               <h3>Email</h3>
-              <p>ctcom@microfinance-ess.gouv.sn</p>
+              <p>prixmmess@microfinance-ess.gouv.sn</p>
             </div>
           </div><!-- End Info Item -->
 
@@ -306,5 +338,25 @@
     </section><!-- /Contact Section -->
 
   </main>
-  @endsection
 
+
+  @endsection
+<style>
+  .directeur-quote {
+    font-style: italic;
+    color: #555;
+    line-height: 1.6;
+}
+
+.directeur-signature {
+    text-align: right;
+    font-weight: bold;
+    color: #333;
+}
+
+.modal-body {
+    text-align: justify;
+    line-height: 1.6;
+}
+
+</style>

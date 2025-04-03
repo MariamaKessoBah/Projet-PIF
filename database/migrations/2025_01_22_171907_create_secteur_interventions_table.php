@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('designation_secteur'); 
             $table->string('descripion_secteur'); 
-            $table->timestamps();
         });
     }
 

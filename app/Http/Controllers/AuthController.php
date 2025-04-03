@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AuthRequest; // Si vous l'utilisez
@@ -6,9 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Notifications\UserRegisteredNotification;
-
-
+use App\Notifications\WelcomeUserNotification;
+use Illuminate\Support\Facades\Log; // Ajout de l'importation de Log
+use Illuminate\Support\Facades\DB; 
 
 class AuthController extends Controller
 {
@@ -17,6 +18,7 @@ class AuthController extends Controller
     {
         return view('auth.login');
     }
+
 
     // Gérer la connexion de l'utilisateur
     public function handleLogin(Request $request)
@@ -28,23 +30,29 @@ class AuthController extends Controller
     
         if (Auth::attempt($validated)) {
             $user = Auth::user();
-    
+        
             // Vérification du rôle
-            if ($user->role === 'structure') {
-                return redirect()->route('dashboard');
-            } elseif ($user->role === 'evaluateur' || $user->role === 'DMIF' || $user->role === 'jury') {
-                return redirect()->route('evalue');
-            } elseif ($user->role === 'superAdmin') {
-                return redirect()->route('administrateur'); 
-            } else {
-                return redirect()->route('accueil');
+            switch ($user->role) {
+                case 'structure':
+                    return redirect()->route('dashboard');
+                case 'evaluateur':
+                case 'DMIF':
+                case 'jury':
+                    return redirect()->route('evalue');
+                case 'superAdmin':
+                    return redirect()->route('administrateur'); 
+                default:
+                    return redirect()->route('accueil');
             }
-                } return redirect()->back()
-                ->with('error_msg', 'Paramètres de connexion incorrects')
-                ->with('open_modal', true); // Ajouter cette variable à la session
-    
+        }
+        
+        
+        return redirect()->back()
+        ->with('error_msg', 'Adresse e-mail ou mot de passe incorrect.')
+        ->with('open_modal', true);
     }
-    
+
+    // Déconnexion de l'utilisateur
     public function logout(Request $request)
     {
         Auth::logout(); // Déconnecte l'utilisateur
@@ -55,65 +63,88 @@ class AuthController extends Controller
         return redirect()->route('accueil')->with('status', 'Vous êtes déconnecté.');
     }    
 
-
     public function register(Request $request)
     {
         try {
+            // Validation des données
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
+                'email' => 'required|string|email:rfc,dns|max:255|unique:users',
                 'password' => 'required|string|min:8|confirmed',
             ]);
     
+
+            // Création de l'utilisateur
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => bcrypt($request->password),
-                'role' => 'structure',
+                'password' => $request->password,
+                'role' => 'structure', 
             ]);
     
-            // Envoyer un email de confirmation
-            $user->notify(new UserRegisteredNotification($user));
+            // Envoi de la notification
+            $user->notify(new WelcomeUserNotification($user));
     
+            // Renvoi de la réponse en JSON
             return response()->json([
-                'message' => __('messages.registration_success'),
+                'status' => 'success',
+                'message' => 'Inscription réussie. Un e-mail de confirmation vous a été envoyé.'
             ]);
+            
         } catch (\Exception $e) {
-            \Log::error('Registration error:', [
+            // Enregistrer l'erreur dans les logs
+            Log::error('Erreur lors de l\'inscription :', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
     
             return response()->json([
-                'message' => __('messages.registration_failed'),
+                'status' => 'error',
+                'message' => 'Erreur lors de l\'inscription. Veuillez réessayer.'
             ], 500);
         }
     }
     
     
-
-    
-    // Mettre à jour le compte utilisateur
     public function updateAccount(Request $request)
     {
-        // Validation des données entrantes
+        Log::info("Données reçues:", $request->all());
+        
         $request->validate([
             'email' => 'required|email|unique:users,email,' . Auth::id(),
-            'password' => 'nullable|string|min:8|confirmed', // Vérifie que le mot de passe est confirmé
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
+    
+        try {
+            DB::beginTransaction();
+            
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['message' => 'Utilisateur non trouvé.'], 404);
+            }
+            
+            $data = ['email' => $request->email];
+            if ($request->filled('password')) {
+                $data['password'] = $request->password;
+            }
 
-        // Mise à jour des informations de l'utilisateur
-        $user = Auth::user();
-        $user->email = $request->email;
-
-        if ($request->filled('password')) {
-            // Hash le mot de passe avant de le stocker
-            $user->password = Hash::make($request->password);
+            if (!$user instanceof \App\Models\User) {
+                return response()->json(['message' => 'Utilisateur non trouvé.'], 404);
+            }
+            
+            $user->update($data);
+            DB::commit();
+            
+            Log::info("Utilisateur mis à jour:", ['id' => $user->id, 'email' => $user->email]);
+            
+            return response()->json(['message' => 'Informations mises à jour avec succès!'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Erreur mise à jour:", ['error' => $e->getMessage()]);
+            
+            return response()->json(['message' => 'Une erreur est survenue.'], 500);
         }
-
-        $user->save();
-
-        // Redirige avec un message pour le toast
-        return redirect()->back()->with('toast', ['message' => 'Informations de compte mises à jour avec succès!', 'type' => 'success']);
     }
+    
 }

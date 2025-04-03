@@ -21,6 +21,9 @@ class AccueilController extends Controller
         return view('docCandidature');
     }
 
-
+     // La page/vue dashboard.blade.php
+     public function galerie(){
+        return view('mediatheque');
+    }
 
 }

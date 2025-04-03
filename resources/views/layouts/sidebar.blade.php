@@ -1,7 +1,7 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4 position-fixed" style="height: 100vh; background-color: #296955;">
     <div class="dropdown">
         <div style="text-align: center;">
-            <a href="{{ route('dashboard') }}" class="brand-link">
+            <a href="" class="brand-link">
                 <img src="{{ asset('images/logo.png') }}" alt="Logo" style="height: 40px;">
             </a>
         </div>
@@ -68,7 +68,26 @@
                       <p>Critères d'Évaluation</p>
                   </a>
               </li>
-               
+
+              @php
+              $users_routes = $users_routes ?? []; // Assurer que la variable existe
+          @endphp
+          
+          <li class="nav-item {{ in_array(request()->route()->getName(), $users_routes) ? 'menu-open' : '' }}" style="margin-bottom: 10px; border-bottom: 1px solid #444;">
+              <a href="{{ route('registerEvaluator') }}" class="nav-link {{ request()->routeIs('registerEvaluator') ? 'active' : '' }}">
+                  <i class="nav-icon fas fa-users"></i>
+                  <p>Users <i class="right fas fa-angle-left"></i></p>
+              </a>
+              <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                      <a href="{{ route('registerEvaluator') }}" class="nav-link {{ request()->routeIs('registerEvaluator') ? 'active' : '' }}">
+                          <i class="fas fa-angle-right nav-icon"></i>
+                          <p>Add New</p>
+                      </a>
+                  </li>
+              </ul>
+          </li>
+          
           @endif
                 <!-- Dashboard (visible uniquement pour le compte Evaluateur) -->
                 @if(Auth::user()->role === 'evaluateur')
@@ -164,16 +183,45 @@
 
                 <!-- Déconnexion -->
                 <li class="nav-item" style="margin-bottom: 10px; border-bottom: 1px solid #444;">
-                    <form action="{{ route('logout') }}" method="POST">
+                    <form action="{{ route('logout') }}" method="POST" id="logoutForm">
                         @csrf
-                        <button type="submit" style="background-color: #296955; color: #c4c4c4; border: none;" class="nav-link">
-                            <i class="fas fa-sign-out-alt nav-icon"></i> 
+                        <button type="submit" style="background-color: #296955; color: #c4c4c4; border: none;" class="nav-link" id="logoutButton">
+                            <i class="fas fa-sign-out-alt nav-icon"></i>
                             <p class="logout-text">Déconnexion</p>
                         </button>
                     </form>
+                    <!-- Barre de chargement -->
+                    <div id="progressBarContainer" style="display: none; margin-top: 10px;">
+                        <div class="progress" style="height: 10px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
                 </li>
 
             </ul>
         </nav>
     </div>
 </aside>
+
+<!-- Ajouter un peu de JS pour gérer la barre de chargement -->
+<script>
+    document.getElementById('logoutForm').addEventListener('submit', function(e) {
+        e.preventDefault();  // Empêche le formulaire de se soumettre immédiatement
+        // Afficher la barre de chargement
+        document.getElementById('progressBarContainer').style.display = 'block';
+        let progress = 0;
+        
+        // Fonction pour animer la barre de chargement
+        let interval = setInterval(function() {
+            if (progress < 100) {
+                progress += 10;  // Augmente le progrès de 10% à chaque itération
+                document.getElementById('progressBar').style.width = progress + '%';
+                document.getElementById('progressBar').setAttribute('aria-valuenow', progress);
+            } else {
+                clearInterval(interval);  // Arrête l'animation lorsque la barre est pleine
+                // Soumettre le formulaire après l'animation
+                document.getElementById('logoutForm').submit();
+            }
+        }, 200);  // Mise à jour toutes les 100 ms
+    });
+</script>

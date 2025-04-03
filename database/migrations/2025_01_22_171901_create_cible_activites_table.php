@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('cible_activites', function (Blueprint $table) {
             $table->id();
             $table->string('designation_cible'); // Utilisez integer si vous voulez stocker l'année uniquement
-            $table->timestamps();
         });
     }
 

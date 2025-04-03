@@ -1,5 +1,6 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
+<!-- Modal d'inscription -->
 <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -13,6 +14,8 @@
       <div class="modal-body">
         <form id="registerForm" action="{{ route('register') }}">
           @csrf
+          <!-- Afficher le message d'erreur -->
+        
           <div class="mb-3">
             <label for="name" class="form-label">Nom complet</label>
             <input type="text" class="form-control" id="name" name="name" placeholder="Votre nom complet" required>
@@ -30,86 +33,144 @@
             <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="Confirmez votre mot de passe" required>
           </div>
           <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-success">Créer un compte</button>
+            <button type="submit" class="btn btn-success" id="submitBtn">Créer un compte</button>
+            <div id="loadingSpinner" class="spinner-border text-primary" style="display: none;" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
           </div>
         </form>
         <hr>
         <div class="text-center">
-          <p>Déjà un compte ? <a href="{{ route('login') }}" data-bs-toggle="modal" data-bs-dismiss="modal">Se connecter</a></p>
+          <p>Déjà un compte ? <a href="#loginModal" data-bs-toggle="modal" data-bs-dismiss="modal">Se connecter</a></p>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal de confirmation -->
+<!-- Lien vers Animate.css pour les animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- Modal de confirmation amélioré -->
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="confirmationModalLabel">Inscription réussie</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-content shadow-lg border-0 rounded-4 animate__animated animate__fadeInDown">
+      
+      <!-- Header -->
+      <div class="modal-header bg-gradient text-white">
+        <h5 class="modal-title fw-bold" id="confirmationModalLabel">🎉 Inscription réussie !</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body text-center">
-        <p>Un e-mail de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.</p>
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+      
+      <!-- Body -->
+      <div class="modal-body text-center p-4">
+        <div class="icon-container mb-3">
+          <i class="fas fa-check-circle fa-4x text-success glow"></i>
+        </div>
+        <p class="fs-5 fw-semibold">Un e-mail de confirmation vous a été envoyé.</p>
+        <p class="text-muted small">Veuillez vérifier votre boîte de réception et votre dossier spam.</p>
+        
+        <div class="alert alert-info small rounded-3 mt-3">
+          <strong>📩 Vous ne trouvez pas l'email ?</strong><br>
+          Essayez de <a href="#" class="text-decoration-none fw-bold" data-bs-toggle="modal" data-bs-target="#registerModal">renvoyer la confirmation</a>.
+        </div>        
       </div>
+      
+      <!-- Footer -->
+      <div class="modal-footer d-flex justify-content-center border-0 pb-4">
+        <button type="button" class="btn btn-success px-4 fw-bold shadow-sm" data-bs-dismiss="modal">OK</button>
+      </div>
+
     </div>
   </div>
 </div>
 
+<!-- Inclusion de jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Votre script personnalisé -->
 <script>
-  // Réinitialise les champs et messages d'erreur lorsque la modale est fermée
-  $('#registerModal').on('hidden.bs.modal', function () {
-      $('#registerForm')[0].reset();
-      $('.is-invalid').removeClass('is-invalid');
-      $('.invalid-feedback').remove();
-  });
+$('#registerForm').on('submit', function (e) {
+    e.preventDefault(); // Empêche la soumission classique du formulaire
 
-  // Place le focus sur le champ "Nom complet" à l'ouverture
-  $('#registerModal').on('shown.bs.modal', function () {
-      $('#name').trigger('focus');
-  });
+    $('#submitBtn').hide();
+    $('#loadingSpinner').show();
+    $('.text-danger, .invalid-feedback').remove();
+    $('.form-control').removeClass('is-invalid');
 
-  // Gestion de l'envoi du formulaire
-  $('#registerForm').on('submit', function (e) {
-      e.preventDefault(); // Empêche la soumission classique du formulaire
+    if ($('#password').val() !== $('#password_confirmation').val()) {
+        $('#password_confirmation').after('<div class="text-danger">Les mots de passe ne correspondent pas.</div>');
+        $('#submitBtn').show();
+        $('#loadingSpinner').hide();
+        return;
+    }
 
-      $('.text-danger, .invalid-feedback').remove(); // Supprime les messages d'erreur existants
-
-      // Vérifie si les mots de passe correspondent
-      if ($('#password').val() !== $('#password_confirmation').val()) {
-          $('#password_confirmation').after('<div class="text-danger">Les mots de passe ne correspondent pas.</div>');
-          return;
-      }
-
-      // Envoi du formulaire avec AJAX
-      $.ajax({
-          url: '{{ route("register") }}', // Utilise la route Laravel
-          method: 'POST',
-          data: $(this).serialize(),
-          headers: {
-              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-          },
-          success: function (response) {
-              // Masque le formulaire et affiche le modal de confirmation
-              $('#registerModal').modal('hide');
-              $('#confirmationModal').modal('show');
-          },
-          error: function (xhr) {
-              const errors = xhr.responseJSON?.errors;
-              if (errors) {
-                  for (let field in errors) {
-                      const input = $(`#${field}`);
-                      input.addClass('is-invalid');
-                      if (input.next('.invalid-feedback').length === 0) {
-                          input.after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
-                      }
+    $.ajax({
+        url: '{{ route("register") }}',
+        method: 'POST',
+        data: $(this).serialize(),
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+        },
+        success: function (response) {
+            if (response.status == "success") {
+                $('#registerModal').modal('hide');
+                $('#confirmationModal').modal('show');
+                $('#confirmationMessage').text(response.message);
+                $('#registerForm')[0].reset();
+            }
+        },
+        error: function (xhr) {
+            if (xhr.status === 422) {
+                let errors = xhr.responseJSON.errors;
+                for (let field in errors) {
+                    let input = $([name="${field}"]);
+                    input.addClass('is-invalid');
+                    input.after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
                   }
-              } else {
-                  alert('Erreur interne. Veuillez réessayer plus tard.');
-              }
-          }
-      });
+            } else {
+                alert(xhr.responseJSON.message || 'Erreur interne, veuillez réessayer.');
+            }
+            $('#submitBtn').show();
+            $('#loadingSpinner').hide();
+        }
+    });
+});
+</script>
+<script>
+  // Lors de la fermeture du modal d'inscription, on vérifie si le modal de connexion est aussi fermé
+  $('#registerModal').on('hidden.bs.modal', function () {
+    if (!$('#loginModal').hasClass('show')) {
+      // Si le modal de connexion est également fermé, on supprime la couche sombre
+      $('body').removeClass('modal-open');
+      $('.modal-backdrop').remove();
+    }
+  });
+
+  // Lors de l'ouverture du modal d'inscription, on ferme le modal de connexion sans supprimer la couche sombre
+  $('#registerModal').on('show.bs.modal', function () {
+    $('#loginModal').modal('hide'); // Ferme le modal de connexion
   });
 </script>
+<!-- Styles CSS personnalisés -->
+<style>
+  .bg-gradient {
+    background: linear-gradient(135deg, #28a745, #218838);
+  }
+
+  .icon-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .glow {
+    text-shadow: 0 0 10px rgba(40, 167, 69, 0.7);
+  }
+
+  .btn-success:hover {
+    background-color: #1e7e34 !important;
+    transform: scale(1.05);
+    transition: 0.3s;
+  }
+</style>
