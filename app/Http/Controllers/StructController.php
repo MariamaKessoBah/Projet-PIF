@@ -419,8 +419,13 @@ class StructController extends Controller
                     'decret_creation' => $filePaths['decret'],
                     'quitus_fiscal' => $filePaths['quitus'],
                     'id_prix' => $prix->id,
+                    'nbr_homme_toucher' => $request->nbr_homme,
+                    'nbr_femme_toucher' => $request->nbr_femme,
+                    'nbr_jeune_toucher' => $request->nbr_jeune,
+                    'nbr_handicape_toucher' => $request->nbr_handicape,
                     'updated_at' => now(),
                 ])
+                
             );
     
             // Mettre à jour l'intervention nationale
@@ -483,6 +488,108 @@ class StructController extends Controller
         });
     }
     
+    // public function update(Request $request, $id)
+    // {
+    //     // Vérifier si l'utilisateur est connecté
+    //     if (!Auth::check()) {
+    //         return redirect()->route('login');
+    //     }
+    
+    //     // Récupérer la candidature à mettre à jour
+    //     $candidature = DossierCandidature::findOrFail($id);
+    
+    //     // Vérifier si la candidature est validée, évaluée ou terminée
+    //     if (in_array($candidature->etat, ['validé', 'évalué', 'terminé'])) {
+    //         return redirect()->back()->with('error', 'Cette candidature ne peut plus être modifiée.');
+    //     }
+    
+    //     // Définir les règles de validation
+    //     $validationRules = [
+    //         'intitule_activite' => 'required|string|max:255',
+    //         'description_activite' => 'required|string',
+    //         'effet_impact' => 'required|string',
+    //         'innovation' => 'nullable|string',
+    //         'date_debut_intervention' => 'required|date',
+    //         'date_fin_intervention' => 'required|date|after_or_equal:date_debut_intervention',
+    //         'national' => 'nullable|boolean',
+    //         // Validation des régions, départements et communes, selon la sélection de national
+    //         'regions' => $request->has('national') && $request->national != 1 ? 'nullable|array' : 'nullable|array',
+    //         'regions.*' => $request->has('national') && $request->national != 1 ? 'exists:regions,id' : 'nullable',
+    //         'departements' => $request->has('national') && $request->national != 1 ? 'nullable|array' : 'nullable|array',
+    //         'departements.*' => $request->has('national') && $request->national != 1 ? 'exists:departements,id' : 'nullable',
+    //         'communes' => $request->has('national') && $request->national != 1 ? 'nullable|array' : 'nullable|array',
+    //         'communes.*' => $request->has('national') && $request->national != 1 ? 'exists:communes,id' : 'nullable',
+    //         // Autres règles de validation...
+    //     ];
+    
+    //     // Validation des données
+    //     $validatedData = $request->validate($validationRules);
+    
+    //     // Récupérer la structure associée
+    //     $structure = Structure::where('id_user', Auth::id())->first();
+    //     if (!$structure) {
+    //         return redirect()->back()->with('error', 'Structure non trouvée.');
+    //     }
+    
+    //     // Préparation des chemins de fichiers et autres traitements...
+    
+    //     return DB::transaction(function () use ($validatedData, $request, $candidature, $structure) {
+    //         // Mise à jour de la candidature avec les autres champs...
+    //         $candidature->update([
+    //             // Mise à jour des autres champs de la candidature...
+    //         ]);
+    
+    //         // Mise à jour de la table 'pays' pour la zone nationale
+    //         if ($request->has('national') && $request->national == 1) {
+    //             // Si national est coché, mettre à jour ou créer l'enregistrement avec la valeur 1
+    //             Pays::updateOrCreate(
+    //                 ['candidature_id' => $candidature->id],
+    //                 ['national' => 1]
+    //             );
+    //         } else {
+    //             // Si national n'est pas coché, supprimer l'enregistrement dans la table 'pays'
+    //             Pays::where('candidature_id', $candidature->id)->delete();
+    //         }
+    
+    //         // Traitement des relations en fonction de la valeur de 'national'
+    //         if ($request->has('national') && $request->national == 1) {
+    //             // Si national est coché, supprimer toutes les relations régionales
+    //             DB::table('region_derouler')->where('id_candidature', $candidature->id)->delete();
+    //             DB::table('dept_deroule')->where('id_candidature', $candidature->id)->delete();
+    //             DB::table('commune_derouler')->where('id_candidature', $candidature->id)->delete();
+    //         } else {
+    //             // Si national n'est pas coché, traiter les régions, départements et communes
+    //             $regionalRelations = [
+    //                 'regions' => 'region_derouler',
+    //                 'departements' => 'dept_deroule',
+    //                 'communes' => 'commune_derouler',
+    //             ];
+    
+    //             foreach ($regionalRelations as $key => $table) {
+    //                 // Supprimer les anciennes relations
+    //                 DB::table($table)->where('id_candidature', $candidature->id)->delete();
+    
+    //                 // Ajouter les nouvelles relations
+    //                 if (isset($validatedData[$key]) && is_array($validatedData[$key])) {
+    //                     foreach ($validatedData[$key] as $id) {
+    //                         DB::table($table)->insert([
+    //                             'id_candidature' => $candidature->id,
+    //                             'id_' . rtrim($key, 's') => $id,
+    //                             'created_at' => now(),
+    //                             'updated_at' => now()
+    //                         ]);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    
+    //         // Traitement des autres relations (secteurs, cibles, etc.)...
+    
+    //         return redirect('/struct/candidater')->with('success', 'Votre dossier a été mis à jour avec succès.');
+    //     });
+    // }
+
+
     public function update(Request $request, $id)
     {
         // Vérifier si l'utilisateur est connecté
@@ -498,8 +605,8 @@ class StructController extends Controller
             return redirect()->back()->with('error', 'Cette candidature ne peut plus être modifiée.');
         }
     
-        // Définir les règles de validation
-        $validationRules = [
+        // Validation des données
+        $validatedData = $request->validate([
             'intitule_activite' => 'required|string|max:255',
             'description_activite' => 'required|string',
             'effet_impact' => 'required|string',
@@ -507,18 +614,27 @@ class StructController extends Controller
             'date_debut_intervention' => 'required|date',
             'date_fin_intervention' => 'required|date|after_or_equal:date_debut_intervention',
             'national' => 'nullable|boolean',
-            // Validation des régions, départements et communes, selon la sélection de national
             'regions' => $request->has('national') && $request->national != 1 ? 'nullable|array' : 'nullable|array',
             'regions.*' => $request->has('national') && $request->national != 1 ? 'exists:regions,id' : 'nullable',
             'departements' => $request->has('national') && $request->national != 1 ? 'nullable|array' : 'nullable|array',
             'departements.*' => $request->has('national') && $request->national != 1 ? 'exists:departements,id' : 'nullable',
             'communes' => $request->has('national') && $request->national != 1 ? 'nullable|array' : 'nullable|array',
             'communes.*' => $request->has('national') && $request->national != 1 ? 'exists:communes,id' : 'nullable',
-            // Autres règles de validation...
-        ];
-    
-        // Validation des données
-        $validatedData = $request->validate($validationRules);
+            'secteurs' => 'required|array',
+            'secteurs.*' => 'exists:secteur_interventions,id',
+            'cibles' => 'required|array',
+            'cibles.*' => 'exists:cible_activites,id',
+            'nbr_homme' => 'nullable|integer|min:0',
+            'nbr_femme' => 'nullable|integer|min:0',
+            'nbr_jeune' => 'nullable|integer|min:0',
+            'nbr_handicape' => 'nullable|integer|min:0',
+            'rapport' => 'nullable|file|mimes:pdf,doc,docx,zip|max:512000',
+            'ninea' => 'nullable|file|mimes:pdf,doc,docx,zip|max:512000',
+            'rccm' => 'nullable|file|mimes:pdf,doc,docx,zip|max:512000',
+            'agrement' => 'nullable|file|mimes:pdf,doc,docx,zip|max:512000',
+            'decret' => 'nullable|file|mimes:pdf,doc,docx,zip|max:512000',
+            'quitus' => 'nullable|file|mimes:pdf,doc,docx,zip|max:512000',
+        ]);
     
         // Récupérer la structure associée
         $structure = Structure::where('id_user', Auth::id())->first();
@@ -526,63 +642,105 @@ class StructController extends Controller
             return redirect()->back()->with('error', 'Structure non trouvée.');
         }
     
-        // Préparation des chemins de fichiers et autres traitements...
+        // Mapping des types de fichiers
+        $fileMap = [
+            'rapport' => 'rapport_activite',
+            'ninea' => 'fichier_ninea',
+            'rccm' => 'fichier_rccm',
+            'agrement' => 'fichier_agrement',
+            'decret' => 'decret_creation',
+            'quitus' => 'quitus_fiscal'
+        ];
     
-        return DB::transaction(function () use ($validatedData, $request, $candidature, $structure) {
-            // Mise à jour de la candidature avec les autres champs...
+        // Préparation des chemins de fichiers
+        $filePaths = [];
+    
+        // Traitement des fichiers
+        foreach ($fileMap as $inputName => $dbField) {
+            if ($request->hasFile($inputName)) {
+                // Supprimer l'ancien fichier s'il existe
+                $oldFilePath = $candidature->$dbField;
+                if ($oldFilePath && Storage::disk('public')->exists($oldFilePath)) {
+                    Storage::disk('public')->delete($oldFilePath);
+                }
+    
+                // Générer un nom de fichier unique
+                $file = $request->file($inputName);
+                $structureName = Str::slug($structure->nom_structure ?? 'structure');
+                $filename = $structureName . '' . $inputName . '' . uniqid() . '.' . $file->getClientOriginalExtension();
+                
+                // Stocker le nouveau fichier
+                $filePaths[$dbField] = $file->storeAs('documents', $filename, 'public');
+            } else {
+                // Conserver l'ancien fichier
+                $filePaths[$dbField] = $candidature->$dbField;
+            }
+        }
+    
+        return DB::transaction(function () use ($validatedData, $request, $candidature, $filePaths, $structure) {
+            // Mise à jour de la candidature
             $candidature->update([
-                // Mise à jour des autres champs de la candidature...
+                'intitule_activite' => $validatedData['intitule_activite'],
+                'description_activite' => $validatedData['description_activite'],
+                'effet_impact' => $validatedData['effet_impact'],
+                'innovation' => $validatedData['innovation'] ?? null,
+                'date_debut_intervention' => $validatedData['date_debut_intervention'],
+                'date_fin_intervention' => $validatedData['date_fin_intervention'],
+                'national' => $request->has('national') ? 1 : 0,
+                'rapport_activite' => $filePaths['rapport_activite'],
+                'fichier_ninea' => $filePaths['fichier_ninea'],
+                'fichier_rccm' => $filePaths['fichier_rccm'],
+                'fichier_agrement' => $filePaths['fichier_agrement'],
+                'decret_creation' => $filePaths['decret_creation'],
+                'quitus_fiscal' => $filePaths['quitus_fiscal'],
+                'nbr_homme_toucher' => $validatedData['nbr_homme'] ?? 0,
+                'nbr_femme_toucher' => $validatedData['nbr_femme'] ?? 0,
+                'nbr_jeune_toucher' => $validatedData['nbr_jeune'] ?? 0,
+                'nbr_handicape_toucher' => $validatedData['nbr_handicape'] ?? 0,
             ]);
     
-            // Mise à jour de la table 'pays' pour la zone nationale
-            if ($request->has('national') && $request->national == 1) {
-                // Si national est coché, mettre à jour ou créer l'enregistrement avec la valeur 1
-                Pays::updateOrCreate(
-                    ['candidature_id' => $candidature->id],
-                    ['national' => 1]
-                );
-            } else {
-                // Si national n'est pas coché, supprimer l'enregistrement dans la table 'pays'
-                Pays::where('candidature_id', $candidature->id)->delete();
-            }
+            // Suppression et réinsertion des relations
+            $relations = [
+                'regions' => 'region_derouler',
+                'departements' => 'dept_deroule',
+                'communes' => 'commune_derouler',
+                'secteurs' => 'secteur_toucher',
+                'cibles' => 'viser_activites',
+            ];
     
-            // Traitement des relations en fonction de la valeur de 'national'
-            if ($request->has('national') && $request->national == 1) {
-                // Si national est coché, supprimer toutes les relations régionales
-                DB::table('region_derouler')->where('id_candidature', $candidature->id)->delete();
-                DB::table('dept_deroule')->where('id_candidature', $candidature->id)->delete();
-                DB::table('commune_derouler')->where('id_candidature', $candidature->id)->delete();
-            } else {
-                // Si national n'est pas coché, traiter les régions, départements et communes
-                $regionalRelations = [
-                    'regions' => 'region_derouler',
-                    'departements' => 'dept_deroule',
-                    'communes' => 'commune_derouler',
-                ];
-    
-                foreach ($regionalRelations as $key => $table) {
-                    // Supprimer les anciennes relations
-                    DB::table($table)->where('id_candidature', $candidature->id)->delete();
-    
-                    // Ajouter les nouvelles relations
-                    if (isset($validatedData[$key]) && is_array($validatedData[$key])) {
-                        foreach ($validatedData[$key] as $id) {
-                            DB::table($table)->insert([
-                                'id_candidature' => $candidature->id,
-                                'id_' . rtrim($key, 's') => $id,
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ]);
-                        }
+            foreach ($relations as $key => $table) {
+                // Supprimer les anciennes relations
+                DB::table($table)->where('id_candidature', $candidature->id)->delete();
+                
+                if (isset($validatedData[$key]) && is_array($validatedData[$key])) {
+                    foreach ($validatedData[$key] as $id) {
+                        DB::table($table)->insert([
+                            'id_candidature' => $candidature->id,
+                            'id_' . rtrim($key, 's') => $id,
+                        ]);
                     }
                 }
             }
+            // Récupération des données pour la vue
+            $regions = Region::all();
+            $departements = Departement::all();
+            $communes = Commune::all();
+            $secteur_interventions = SecteurIntervention::all();
+            $cible_activites = CibleActivite::all();
+            $candidatures = DossierCandidature::where('id_structure', $structure->id ?? null)->get();
     
-            // Traitement des autres relations (secteurs, cibles, etc.)...
+            // Message de succès
+            session()->flash('success', 'Votre candidature a été mise à jour avec succès.');
     
-            return redirect('/struct/candidater')->with('success', 'Votre dossier a été mis à jour avec succès.');
+            return view('struct.candidater', compact(
+                'structure', 'regions', 'departements', 'communes', 
+                'secteur_interventions', 'cible_activites', 'candidatures'
+            ))->with('national', $request->has('national') ? 1 : 0);
+            
         });
     }
+       
+    
     
     
 /**
