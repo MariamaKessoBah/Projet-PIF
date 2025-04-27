@@ -55,6 +55,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/candidatures/valider', [EvaluatorController::class, 'valider'])->name('candidatures.valider');
         Route::get('/evalue', [EvaluatorController::class, 'index'])->name('evalue');  
         Route::get('/registerEvaluator', [EvaluatorController::class, 'evaluateurRegist'])->name('registerEvaluator');  
+        Route::get('/editeurEvaluator', [EvaluatorController::class, 'evaluateurEdit'])->name('editEvaluator');
+        Route::delete('/evaluateurs/{id}', [EvaluatorController::class, 'destroy'])->name('deleteEvaluator');
+        
 
         Route::post('/enregistrerNote', [EvaluatorController::class, 'enregistrerNote'])
         ->name('candidatures.enregistrerNote');

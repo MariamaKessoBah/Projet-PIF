@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log; // Ajout de l'importation de Log
 use App\Models\Laureat;
 use App\Models\Region;
 
+
 class EvaluatorController extends Controller 
 {
     /**
@@ -46,6 +47,98 @@ class EvaluatorController extends Controller
         // Retourner la vue avec les variables
         return view('evaluator.registerEvaluator');
     }
+
+   
+    
+    public function evaluateurEdit()
+    {
+        $evaluateurs = Evaluateur::with('user')->get(); // On récupère les évaluateurs avec leurs users
+        return view('evaluator.editeurEvaluator', compact('evaluateurs'));
+    }
+
+
+    public function evaluateurStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'tel' => 'required|string',
+            'structure' => 'required|string',
+            'fonction' => 'required|string',
+        ]);
+
+        // Création de l'utilisateur
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $request->password,
+            'role' => 'evaluateur', 
+        ]);
+
+        // Création de l'évaluateur
+        $evaluateur = Evaluateur::create([
+            'id_user' => $user->id,
+            'tel' => $request->tel,
+            'structure' => $request->structure,
+            'fonction' => $request->fonction,
+        ]);
+
+        // Envoi de la notification
+        $user->notify(new EvaluateurRegisteredNotification($user));
+
+        // Rediriger vers la page d'édition de l'évaluateur créé
+        return redirect()->route('editEvaluator', ['id' => $evaluateur->id])
+                        ->with('success', 'Évaluateur enregistré avec succès.');
+    }
+
+
+
+    public function update(Request $request, $id)
+    {
+        $evaluator = Evaluateur::findOrFail($id);
+        $user = $evaluator->user;
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'structure' => 'nullable|string|max:255',
+            'fonction' => 'nullable|string|max:255',
+            'tel' => 'nullable|string|max:20',
+        ]);
+
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+
+        $evaluator->update([
+            'structure' => $validated['structure'],
+            'fonction' => $validated['fonction'],
+            'tel' => $validated['tel'],
+        ]);
+
+        return redirect()->route('listEvaluator')->with('success', 'Évaluateur modifié avec succès.');
+    }
+
+
+    
+    public function destroy($id)
+    {
+        // On récupère l'évaluateur
+        $evaluateur = Evaluateur::findOrFail($id);
+    
+        // Supprimer l'utilisateur associé à cet évaluateur
+        $user = $evaluateur->user;
+        $user->delete(); // Cette ligne supprime l'utilisateur
+    
+        // On supprime l'évaluateur
+        $evaluateur->delete();
+    
+        // Rediriger avec un message de succès
+        return redirect()->back()->with('success', 'Évaluateur et utilisateur supprimés avec succès.');
+    }
+    
     
 
 
@@ -387,125 +480,94 @@ class EvaluatorController extends Controller
     
     
     public function enregistrerNote(Request $request)
-{
-    try {
-        Log::info('Début de enregistrerNote');
+    {
+        try {
+            Log::info('Début de enregistrerNote');
 
-        // Récupérer l'évaluateur connecté
-        $evaluateur = Evaluateur::where('id_user', Auth::id())->first();
+            // Récupérer l'évaluateur connecté
+            $evaluateur = Evaluateur::where('id_user', Auth::id())->first();
 
-        if (!$evaluateur) {
-            Log::error('Évaluateur non trouvé pour l\'utilisateur:', ['user_id' => Auth::id()]);
+            if (!$evaluateur) {
+                Log::error('Évaluateur non trouvé pour l\'utilisateur:', ['user_id' => Auth::id()]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Évaluateur non trouvé'
+                ], 404);
+            }
+
+            Log::info('Évaluateur trouvé:', ['evaluateur_id' => $evaluateur->id]);
+
+            // Validation des données
+            $validated = $request->validate([
+                'candidature_id' => 'required|exists:dossier_candidatures,id',
+                'ratings' => 'required|array',
+                'ratings.*.id_critere' => 'required|exists:criteres,id',
+                'ratings.*.note_critere' => 'required|integer|between:0,10',
+                'ratings.*.observation' => 'nullable|string'
+            ]);
+
+            DB::beginTransaction();
+
+            // Mettre à jour ou enregistrer les notes
+            foreach ($validated['ratings'] as $rating) {
+                Note::updateOrCreate(
+                    [
+                        'id_candidature' => $validated['candidature_id'],
+                        'id_critere' => $rating['id_critere'],
+                        'id_evaluateur' => $evaluateur->id
+                    ],
+                    [
+                        'note_critere' => $rating['note_critere'],
+                        'observation' => $rating['observation'],
+                        'etat_note' => 'en attente',
+                        'etat' => 'en_attente'
+                    ]
+                );
+            }
+
+            // Vérifier si tous les évaluateurs ont soumis leurs notes
+            $totalEvaluateurs = Evaluateur::count();
+            $candidatureId = $validated['candidature_id'];
+
+            $evaluateursAyantÉvalué = Note::where('id_candidature', $candidatureId)
+                ->distinct('id_evaluateur')
+                ->count('id_evaluateur');
+
+            Log::info('Évaluateurs ayant évalué:', ['count' => $evaluateursAyantÉvalué]);
+
+            // Si tous les évaluateurs ont évalué, mettre à jour la candidature en "évalué"
+            if ($evaluateursAyantÉvalué >= $totalEvaluateurs) {
+                DossierCandidature::where('id', $candidatureId)
+                    ->update(['etat' => 'évalué']);
+
+                Log::info("Candidature ID $candidatureId mise à jour en 'évalué'.");
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Les notes ont été enregistrées/mises à jour avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur dans enregistrerNote:', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Évaluateur non trouvé'
-            ], 404);
+                'message' => 'Une erreur est survenue: ' . $e->getMessage()
+            ], 500);
         }
-
-        Log::info('Évaluateur trouvé:', ['evaluateur_id' => $evaluateur->id]);
-
-        // Validation des données
-        $validated = $request->validate([
-            'candidature_id' => 'required|exists:dossier_candidatures,id',
-            'ratings' => 'required|array',
-            'ratings.*.id_critere' => 'required|exists:criteres,id',
-            'ratings.*.note_critere' => 'required|integer|between:0,10',
-            'ratings.*.observation' => 'nullable|string'
-        ]);
-
-        DB::beginTransaction();
-
-        // Mettre à jour ou enregistrer les notes
-        foreach ($validated['ratings'] as $rating) {
-            Note::updateOrCreate(
-                [
-                    'id_candidature' => $validated['candidature_id'],
-                    'id_critere' => $rating['id_critere'],
-                    'id_evaluateur' => $evaluateur->id
-                ],
-                [
-                    'note_critere' => $rating['note_critere'],
-                    'observation' => $rating['observation'],
-                    'etat_note' => 'en attente',
-                    'etat' => 'en_attente'
-                ]
-            );
-        }
-
-        // Vérifier si tous les évaluateurs ont soumis leurs notes
-        $totalEvaluateurs = Evaluateur::count();
-        $candidatureId = $validated['candidature_id'];
-
-        $evaluateursAyantÉvalué = Note::where('id_candidature', $candidatureId)
-            ->distinct('id_evaluateur')
-            ->count('id_evaluateur');
-
-        Log::info('Évaluateurs ayant évalué:', ['count' => $evaluateursAyantÉvalué]);
-
-        // Si tous les évaluateurs ont évalué, mettre à jour la candidature en "évalué"
-        if ($evaluateursAyantÉvalué >= $totalEvaluateurs) {
-            DossierCandidature::where('id', $candidatureId)
-                ->update(['etat' => 'évalué']);
-
-            Log::info("Candidature ID $candidatureId mise à jour en 'évalué'.");
-        }
-
-        DB::commit();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Les notes ont été enregistrées/mises à jour avec succès'
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Erreur dans enregistrerNote:', [
-            'message' => $e->getMessage(),
-            'line' => $e->getLine(),
-            'file' => $e->getFile()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Une erreur est survenue: ' . $e->getMessage()
-        ], 500);
     }
-}
 
 
 
-    public function evaluateurStore(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'tel' => 'required|string',
-            'structure' => 'required|string',
-            'fonction' => 'required|string',
-        ]);
-    
-        // Création de l'utilisateur
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-            'role' => 'evaluateur', 
-        ]);
-    
-        // Création de l'évaluateur
-        Evaluateur::create([
-            'id_user' => $user->id,
-            'tel' => $request->tel,
-            'structure' => $request->structure,
-            'fonction' => $request->fonction,
-        ]);
-    
-        // Envoi de la notification
-        $user->notify(new EvaluateurRegisteredNotification($user));
-    
-        return redirect()->route('registerEvaluator')->with('success', 'Évaluateur enregistré avec succès.');
-    }
+ 
 
 
 
