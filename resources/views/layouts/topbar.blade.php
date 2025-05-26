@@ -15,16 +15,21 @@
                 <i class="fas fa-bars" aria-hidden="true"></i>
             </a>
         </li>
-        <li>
+        <li class="nav-item flex-grow-1 text-center text-lg-start">
             <a class="nav-link text-black" href="#" role="button">
-                <b>Plateforme du Prix de l’Inclusion Financière</b>
+                <strong class="h6 d-block d-lg-inline text-wrap">
+                    <strong class="d-inline d-lg-none">PIF</strong>
+                    <strong class="d-none d-lg-inline">Plateforme du Prix de l’Inclusion Financière</strong>
+                </strong>
             </a>
         </li>
+        
     </ul>
+
     <ul class="navbar-nav ml-auto">
         <li class="nav-item dropdown">
             <a class="nav-link" style="color: #000;" data-toggle="dropdown" aria-expanded="false" href="#" aria-label="Menu de compte" id="accountDropdown">
-                <div class="d-flex badge-pill">
+                <div class="d-flex badge-pill align-items-center">
                     <span class="fa fa-user mr-2" aria-hidden="true"></span>
                     <span><b>{{ Auth::user()->role ?? 'Role non défini' }}</b></span>
                     <span class="fa fa-angle-down ml-2" aria-hidden="true"></span>
@@ -44,6 +49,7 @@
         </li>
     </ul>
 </nav>
+
 
 <!-- Modal pour gérer le compte -->
 <div class="modal fade" id="accountModal" tabindex="-1" role="dialog" aria-labelledby="accountModalLabel" aria-hidden="true">

@@ -26,75 +26,77 @@
     <!-- Main content -->
     <section class="content">
         <div class="container-fluid">
-            <div class="col-lg-12">
-                <div class="card card-outline card-success">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="fas fa-trophy text-warning mr-2"></i>
-                            Classement des Lauréats
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-hover table-bordered" id="list">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th class="text-center" style="width: 100px;">Rang</th>
-                                    <th>Nom de structure</th>
-                                    <th>Intitulé de l'activité</th>
-                                    <th class="text-center">Score Final</th>
-                                    <th class="text-center" style="width: 100px;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($laureats as $laureat)
-                                    <tr>
-                                        <td>
-                                            <span class="rank">{{ $laureat->rang }}</span>
-                                            @if ($laureat->rang == 1)
-                                                <i class="fas fa-trophy text-warning"></i>
-                                            @elseif ($laureat->rang == 2)
-                                                <i class="fas fa-trophy text-secondary"></i>
-                                            @elseif ($laureat->rang == 3)
-                                                <i class="fas fa-trophy text-brown"></i>
-                                            @endif
-                                        </td>
-                                        <td class="font-weight-bold">{{ $laureat->structure_nom }}</td>
-                                        <td>{{ $laureat->intitule_activite }}</td>
-                                        <td class="text-center font-weight-bold">{{ number_format($laureat->note_finale, 1) }}/210</td>
-                                        <td class="text-center">
-                                            <button class="btn btn-info btn-sm" 
-                                                    onclick="showLaureatDetails('{{ $laureat->id }}')" 
-                                                    data-id="{{ $laureat->id }}"
-                                                    title="Voir détails">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                   
-                                @endforeach
-                                <div class="d-flex justify-content-between mb-3">
-                                    @if(auth()->user()->role === 'DMIF') {{-- Vérifie si l'utilisateur a le rôle DMIF --}}
-                                        @if($etatNote === 'publiée')
-                                            <button class="btn btn-success" disabled>
-                                                Note déjà publiée
-                                            </button>
-                                        @else
-                                            <button class="btn btn-primary" id="btnPublier">
-                                                <i class="fas fa-upload"></i> Publier la Liste
-                                            </button>
-                                        @endif
-                                    @endif
-                                </div>                                
-                                
+    <div class="col-lg-12">
+        <div class="card card-outline card-success">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-trophy text-warning mr-2"></i>
+                    Classement des Lauréats
+                </h3>
+            </div>
+            <div class="card-body">
 
-                            </tbody>
-                        </table>
-                        
-                        
-                    </div>
+                <!-- Wrap table inside a div with class "table-responsive" -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered" id="list">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="text-center" style="width: 100px;">Rang</th>
+                                <th>Nom de structure</th>
+                                <th>Intitulé de l'activité</th>
+                                <th class="text-center">Score Final</th>
+                                <th class="text-center" style="width: 100px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($laureats as $laureat)
+                                <tr>
+                                    <td>
+                                        <span class="rank">{{ $laureat->rang }}</span>
+                                        @if ($laureat->rang == 1)
+                                            <i class="fas fa-trophy text-warning"></i>
+                                        @elseif ($laureat->rang == 2)
+                                            <i class="fas fa-trophy text-secondary"></i>
+                                        @elseif ($laureat->rang == 3)
+                                            <i class="fas fa-trophy text-brown"></i>
+                                        @endif
+                                    </td>
+                                    <td class="font-weight-bold">{{ $laureat->structure_nom }}</td>
+                                    <td>{{ $laureat->intitule_activite }}</td>
+                                    <td class="text-center font-weight-bold">{{ number_format($laureat->note_finale, 1) }}/210</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-info btn-sm" 
+                                                onclick="showLaureatDetails('{{ $laureat->id }}')" 
+                                                data-id="{{ $laureat->id }}"
+                                                title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div> <!-- /.table-responsive -->
+
+                <div class="d-flex justify-content-between mb-3">
+                    @if(auth()->user()->role === 'DMIF')
+                        @if($etatNote === 'publiée')
+                            <button class="btn btn-success" disabled>
+                                Notes déjà publiées
+                            </button>
+                        @else
+                            <button class="btn btn-primary" id="btnPublier">
+                                <i class="fas fa-upload"></i> Publier la Liste
+                            </button>
+                        @endif
+                    @endif
                 </div>
+
             </div>
         </div>
+    </div>
+</div>
+
 
        <!-- Modal Détails du Lauréat -->
     <div class="modal fade" id="detailsLaureatModal" tabindex="-1" role="dialog">

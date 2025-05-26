@@ -26,8 +26,6 @@
         </div>
     </div>
 
-    
-
     <section class="content">
         <div class="container-fluid">
             <div class="col-lg-12">
@@ -73,22 +71,18 @@
                                         <label for="fonction">Fonction</label>
                                         <input type="text" name="fonction" class="form-control" required>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="password">Mot de passe</label>
-                                        <input type="password" class="form-control" name="password" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="password_confirmation">Confirmer Mot de passe</label>
-                                        <input type="password" class="form-control" name="password_confirmation" required>
-                                    </div>
                                 </div>
                             </div>
 
                             <hr>
                             <div class="col-lg-12 text-right">
-                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                <button type="submit" id="submitBtn" class="btn btn-primary">
+                                    <span id="btnText">Enregistrer</span>
+                                    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                </button>
                             </div>
                         </form>
+                        
                     </div>
                 </div>
             </div>
@@ -101,12 +95,22 @@
         let toastMessage = document.getElementById('toastMessage');
         
         @if(session('success') || session('error'))
-            let toast = new bootstrap.Toast(toastMessage, { delay: 5000 }); // 5 secondes avant disparition
+            let toast = new bootstrap.Toast(toastMessage, { delay: 5000 }); // 5 secondes
             toast.show();
         @endif
+
+        // Lors de la soumission, transformer le bouton
+        document.getElementById('register_user').addEventListener('submit', function(event) {
+            const submitButton = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+
+            submitButton.disabled = true;
+            btnText.classList.add('d-none'); // Cacher le texte
+            btnSpinner.classList.remove('d-none'); // Afficher le spinner
+        });
     });
 </script>
-
 
 <style>
     .form-control {

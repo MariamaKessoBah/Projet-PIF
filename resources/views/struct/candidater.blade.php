@@ -50,6 +50,14 @@
 
             <div class="row mb-4">
                 <div class="col-12">
+                    <div class="mb-3 text-right">
+                        <a href="{{ asset('Fiche_Description_BP2.pdf') }}" 
+                          class="btn btn-primary" 
+                          target="_blank"
+                          title="Télécharger le guide de candidature">
+                          <i class="fas fa-file-download"></i> Télécharger le guide
+                        </a>
+                      </div>
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Actions Rapides</h3>
@@ -162,7 +170,7 @@
                                             <select class="form-control select2 text-dark" id="numero_immatriculation" name="numero_immatriculation[]" multiple required>
                                                 <option value="NINEA">NINEA</option>
                                                 <option value="Registre de commerce">Registre de commerce</option>
-                                                <option value="Agreement">Agreement</option>
+                                                <option value="Agreement">Agrément</option>
                                                 <option value="Decret">Decret</option>
                                             </select>
                                             <div class="mt-2">
@@ -181,7 +189,7 @@
                                         </div>
                                         
                                         <div class="form-group d-none" id="field-agreement">
-                                            <label>Agrement</label>
+                                            <label>Agrément</label>
                                             <input type="text" class="form-control" name="agreement">
                                         </div>
                                         
@@ -366,26 +374,44 @@
                                         <div class="col-md-6">
                                             <div class="form-group">*
                                                 <label>Structure <span class="text-danger">*</span></label>
+                                                <span class="tooltip-info" data-toggle="tooltip" title="Indiquez le type de structure (ex : entreprise, ONG, etc.). Ce champ permet de définir la catégorie de votre organisation pour mieux comprendre son rôle dans l'activité proposée.">
+                                                    <i class="fas fa-info-circle info-icon" style="cursor: pointer;"></i>
+                                                </span>
                                                 <input type="text" class="form-control" name="type" value="{{ $structure->type ?? '' }}" disabled>
                                             </div>
                                             <div class="form-group">
                                                 <label>Intitulé de l'activité <span class="text-danger">*</span></label>
+                                                <span class="tooltip-info" data-toggle="tooltip" title="Indiquez le type de structure (ex : entreprise, ONG, etc.). Ce champ permet de définir la catégorie de votre organisation pour mieux comprendre son rôle dans l'activité proposée.">
+                                                    <i class="fas fa-info-circle info-icon" style="cursor: pointer;"></i>
+                                                </span>
                                                 <input type="text" class="form-control" name="intitule_activite" required>
                                             </div>
                                             
                                             <div class="form-group">
-                                                <label>Description de l'activité<span class="text-danger">*</span></label>
+                                                <label>Présentation de l'activité<span class="text-danger">*</span></label>
+                                                <span class="tooltip-info" data-toggle="tooltip" title="Quel est l’objectif de la présente fiche descriptive, la destination ? Quel est le contexte (la situation de départ du dispositif), la problématique essentielle soulevée. Donnez une brève définition de la BP 
+                                                        Expliquez comment elle contribue à apporter des solutions innovantes dans le secteur 
+">
+                                                    <i class="fas fa-info-circle info-icon" style="cursor: pointer;"></i>
+                                                </span>
                                                 <textarea class="form-control" name="description_activite" required></textarea>
+                                                
                                             </div>
                                         </div>
                                 
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label>Effets/Impacts <span class="text-danger">*</span></label>
+                                                <span class="tooltip-info" data-toggle="tooltip" title="Indiquez le type de structure (ex : entreprise, ONG, etc.). Ce champ permet de définir la catégorie de votre organisation pour mieux comprendre son rôle dans l'activité proposée.">
+                                                    <i class="fas fa-info-circle info-icon" style="cursor: pointer;"></i>
+                                                </span>
                                                 <textarea class="form-control" name="effet_impact" rows="4" required></textarea>
                                             </div>
                                             <div class="form-group">
                                                 <label>Innovation dans l'activité <span class="text-danger">*</span></label>
+                                                <span class="tooltip-info" data-toggle="tooltip" title="Indiquez le type de structure (ex : entreprise, ONG, etc.). Ce champ permet de définir la catégorie de votre organisation pour mieux comprendre son rôle dans l'activité proposée.">
+                                                    <i class="fas fa-info-circle info-icon" style="cursor: pointer;"></i>
+                                                </span>
                                                 <textarea class="form-control" name="innovation" rows="4" required></textarea>
                                             </div>
                                         </div>
@@ -393,68 +419,68 @@
                                 </div>
                                 
                           <!-- Étape 2 -->
-<div class="step step-2">
-    <h5>Étape 2 : Zone d'intervention</h5>
+                            <div class="step step-2">
+                                <h5>Étape 2 : Zone d'intervention</h5>
 
-    <div class="form-group">
-        <!-- Zone d'intervention -->
-        <label>Zone d'intervention <span class="text-danger">*</span></label>
-        <!-- Case à cocher pour sélectionner National -->
-        <div class="col-md-12 mt-3">
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="national" name="national" value="1">
-                <label class="form-check-label" for="national">Sélectionner l'intervention à l'échelle nationale</label>
-            </div>
-            <div class="mt-2">
-                <small class="text-muted">Si vous cochez cette option, l'intervention sera considérée comme nationale, sans sélection spécifique des régions, départements ou communes.</small>
-            </div>
-        </div>
+                                <div class="form-group">
+                                    <!-- Zone d'intervention -->
+                                    <label>Zone d'intervention <span class="text-danger">*</span></label>
+                                    <!-- Case à cocher pour sélectionner National -->
+                                    <div class="col-md-12 mt-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="national" name="national" value="1">
+                                            <label class="form-check-label" for="national">Sélectionner l'intervention à l'échelle nationale</label>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">Si vous cochez cette option, l'intervention sera considérée comme nationale, sans sélection spécifique des régions, départements ou communes.</small>
+                                        </div>
+                                    </div>
 
-        <div class="row" id="zone-intervention">
-            <!-- Colonne 1: Régions et Départements -->
-            <div class="col-md-6" id="regions-departements">
-                <div class="form-group">
-                    <label>Régions</label>
-                    <select class="form-control select2" name="regions[]" multiple>
-                        @foreach($regions as $region)
-                            <option value="{{ $region->id }}">{{ $region->nom_region }}</option>
-                        @endforeach
-                    </select>
-                    <div class="mt-2">
-                        <small class="text-muted">Vous pouvez sélectionner plusieurs régions</small>
-                    </div>
-                </div>
+                                    <div class="row" id="zone-intervention">
+                                        <!-- Colonne 1: Régions et Départements -->
+                                        <div class="col-md-6" id="regions-departements">
+                                            <div class="form-group">
+                                                <label>Régions</label>
+                                                <select class="form-control select2" name="regions[]" multiple>
+                                                    @foreach($regions as $region)
+                                                        <option value="{{ $region->id }}">{{ $region->nom_region }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Vous pouvez sélectionner plusieurs régions</small>
+                                                </div>
+                                            </div>
 
-                <div class="form-group">
-                    <label>Départements</label>
-                    <select class="form-control select2" name="departements[]" multiple>
-                        @foreach($departements as $departement)
-                            <option value="{{ $departement->id }}">{{ $departement->nom_departement }}</option>
-                        @endforeach
-                    </select>
-                    <div class="mt-2">
-                        <small class="text-muted">Vous pouvez sélectionner plusieurs départements</small>
-                    </div>
-                </div>
-            </div>
+                                            <div class="form-group">
+                                                <label>Départements</label>
+                                                <select class="form-control select2" name="departements[]" multiple>
+                                                    @foreach($departements as $departement)
+                                                        <option value="{{ $departement->id }}">{{ $departement->nom_departement }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Vous pouvez sélectionner plusieurs départements</small>
+                                                </div>
+                                            </div>
+                                        </div>
 
-            <!-- Colonne 2: Communes -->
-            <div class="col-md-6" id="communes">
-                <div class="form-group">
-                    <label>Communes</label>
-                    <select class="form-control select2" name="communes[]" multiple>
-                        @foreach($communes as $commune)
-                            <option value="{{ $commune->id }}">{{ $commune->nom_commune }}</option>
-                        @endforeach
-                    </select>
-                    <div class="mt-2">
-                        <small class="text-muted">Vous pouvez sélectionner plusieurs communes</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                                        <!-- Colonne 2: Communes -->
+                                        <div class="col-md-6" id="communes">
+                                            <div class="form-group">
+                                                <label>Communes</label>
+                                                <select class="form-control select2" name="communes[]" multiple>
+                                                    @foreach($communes as $commune)
+                                                        <option value="{{ $commune->id }}">{{ $commune->nom_commune }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Vous pouvez sélectionner plusieurs communes</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
 
 
@@ -1319,7 +1345,7 @@
                                         
                                         @if($candidature->fichier_agrement)
                                         <tr>
-                                            <td><strong>AGREEMENT:</strong></td>
+                                            <td><strong>AGREMENT:</strong></td>
                                             <td>
                                                 <a href="{{ route('telecharger', ['type' => 'agrement', 'filename' => basename($candidature->fichier_agrement)]) }}" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-file-alt"></i> Télécharger
@@ -1412,7 +1438,7 @@
                                 <i class="fas fa-times"></i> Fermer
                             </button>
                             <button type="button" class="btn btn-primary" onclick="imprimerModal();">
-                                <i class="fas fa-print"></i> Imprimer
+                                <i class="fas fa-print"></i> Enregistrer
                             </button>
                             
                         </div>

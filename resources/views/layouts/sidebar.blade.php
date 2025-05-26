@@ -15,7 +15,7 @@
                     <li class="nav-item" style="margin-bottom: 10px; border-bottom: 1px solid #444;">
                         <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-home"></i>
-                            <p>Dashboard</p>
+                            <p>Tableau de bord</p>
                         </a>
                     </li>
                     <!-- Candidater -->

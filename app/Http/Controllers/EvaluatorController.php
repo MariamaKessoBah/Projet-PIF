@@ -13,66 +13,59 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Evaluateur;
 use Illuminate\Support\Facades\Storage;
-use App\Notifications\EvaluateurRegisteredNotification;
-use Illuminate\Support\Facades\Log; // Ajout de l'importation de Log
+use App\Notifications\SetPasswordNotification;
+use Illuminate\Support\Facades\Log;
 use App\Models\Laureat;
 use App\Models\Region;
-
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Password;
 
 class EvaluatorController extends Controller 
 {
     /**
-     * Affiche la page d'évaluation.
+     * Affiche la page d'évaluation.
      */
     public function showEvaluationForm()
     {
-        // Récupérer les critères
+        // Récupérer les critères
         $criteres = Critere::all();
         
-        
-        // Débogage : Vérifier que $criteres est bien récupéré
-        // dd($criteres);
-    
-        // Récupérer les candidatures avec pagination
+        // Récupérer les candidatures avec pagination
         $candidatures = DossierCandidature::paginate(10);
     
         // Retourner la vue avec les variables
         return view('evaluator.evalue', compact('candidatures', 'criteres'));
     }
     
-
-    
     public function evaluateurRegist()
     {
         // Retourner la vue avec les variables
         return view('evaluator.registerEvaluator');
     }
-
    
-    
     public function evaluateurEdit()
     {
         $evaluateurs = Evaluateur::with('user')->get(); // On récupère les évaluateurs avec leurs users
         return view('evaluator.editeurEvaluator', compact('evaluateurs'));
     }
 
-
     public function evaluateurStore(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
             'tel' => 'required|string',
             'structure' => 'required|string',
             'fonction' => 'required|string',
         ]);
 
-        // Création de l'utilisateur
+        // Création de l'utilisateur avec un mot de passe temporaire aléatoire
+        $tempPassword = Str::random(20);
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => bcrypt($tempPassword), // Mot de passe temporaire crypté
             'role' => 'evaluateur', 
         ]);
 
@@ -84,15 +77,68 @@ class EvaluatorController extends Controller
             'fonction' => $request->fonction,
         ]);
 
-        // Envoi de la notification
-        $user->notify(new EvaluateurRegisteredNotification($user));
+        // Génération du token pour la réinitialisation du mot de passe
+        $token = Password::createToken($user);
+        
+        // Envoi de la notification avec le lien de définition du mot de passe
+        $user->notify(new SetPasswordNotification($token));
 
-        // Rediriger vers la page d'édition de l'évaluateur créé
-        return redirect()->route('editEvaluator', ['id' => $evaluateur->id])
-                        ->with('success', 'Évaluateur enregistré avec succès.');
+        // Rediriger vers la page d'édition des évaluateurs
+        return redirect()->route('editEvaluator')
+                        ->with('success', 'Évaluateur enregistré avec succès. Un email a été envoyé pour la définition du mot de passe.');
     }
 
-
+    
+public function showSetPasswordForm(Request $request, $token)
+{
+    // Vérifier que l'email est présent dans la requête
+    if (!$request->has('email')) {
+        return redirect()->route('login')->with('error', 'Lien invalide. L\'email est manquant.');
+    }
+    
+    $email = $request->email;
+    
+    // Vérifier que l'email correspond à un utilisateur existant
+    $user = User::where('email', $email)->first();
+    
+    if (!$user) {
+        return redirect()->route('login')->with('error', 'Utilisateur non trouvé.');
+    }
+    
+    return view('evaluator.set-password', [
+        'token' => $token,
+        'email' => $email
+    ]);
+}
+    
+    // Nouvelle méthode pour traiter la définition du mot de passe
+    public function setPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+        
+        // Utiliser le broker de mot de passe pour réinitialiser
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                // Mettre à jour le mot de passe de l'utilisateur
+                $user->password = $password;
+                $user->save();
+            }
+        );
+        
+        if ($status === Password::PASSWORD_RESET) {
+            // Ne pas rediriger vers la page de connexion mais rester sur la page actuelle avec un message de succès
+            return back()->with('status', 'reset_success');
+        } else {
+            return back()->withErrors(['email' => [__($status)]]);
+        }
+    }
+    
+    
 
     public function update(Request $request, $id)
     {
@@ -118,10 +164,8 @@ class EvaluatorController extends Controller
             'tel' => $validated['tel'],
         ]);
 
-        return redirect()->route('listEvaluator')->with('success', 'Évaluateur modifié avec succès.');
+        return redirect()->route('editEvaluator')->with('success', 'Évaluateur modifié avec succès.');
     }
-
-
     
     public function destroy($id)
     {
@@ -139,20 +183,17 @@ class EvaluatorController extends Controller
         return redirect()->back()->with('success', 'Évaluateur et utilisateur supprimés avec succès.');
     }
     
-    
-
-
     public function index()
     {
-        // Récupération des statistiques existantes
+        // Récupération des statistiques existantes
         $candidatures = DossierCandidature::all();
-        $valides = DossierCandidature::where('etat', 'validé')->count();
+        $valides = DossierCandidature::where('etat', 'validé')->count();
         $attente = DossierCandidature::where('etat', 'en_attente')->count();
-        $evalues = DossierCandidature::where('etat', 'évalué')->count();
-        $termines = DossierCandidature::where('etat', 'terminé')->count();
-        $rejectes = DossierCandidature::where('etat', 'rejeté')->count();
+        $evalues = DossierCandidature::where('etat', 'évalué')->count();
+        $termines = DossierCandidature::where('etat', 'terminé')->count();
+        $rejectes = DossierCandidature::where('etat', 'rejeté')->count();
 
-        // Récupération des statistiques par secteur
+        // Récupération des statistiques par secteur
         $secteurStats = DB::table('secteur_toucher')
             ->join('secteur_interventions', 'secteur_toucher.id_secteur', '=', 'secteur_interventions.id')
             ->join('dossier_candidatures', 'secteur_toucher.id_candidature', '=', 'dossier_candidatures.id')
@@ -161,7 +202,7 @@ class EvaluatorController extends Controller
             ->orderBy('total', 'desc')
             ->get();
 
-        // Récupération des statistiques par type de structure
+        // Récupération des statistiques par type de structure
         $structureStats = DB::table('dossier_candidatures')
             ->join('structures', 'dossier_candidatures.id_structure', '=', 'structures.id')
             ->select('structures.type', DB::raw('count(*) as total'))
@@ -181,13 +222,12 @@ class EvaluatorController extends Controller
         ));
     }
 
-
     /**
-     * Affiche les critères d'évaluation.
+     * Affiche les critères d'évaluation.
      */
     public function showCriteriaPage()
     {
-        $candidatures = DossierCandidature::paginate(10); // Pagination par 10 éléments
+        $candidatures = DossierCandidature::paginate(10); // Pagination par 10 éléments
         return view('evaluator.critereEvaluation', compact('candidatures'));
     }
 
@@ -298,12 +338,8 @@ class EvaluatorController extends Controller
         ));
     }
     
-    
-    
-    
-
     /**
-     * Affiche la liste des lauréats.
+     * Affiche la liste des lauréats.
      */
     public function showLaureatesList()
     {
@@ -328,82 +364,82 @@ class EvaluatorController extends Controller
         return view('evaluator.laureat', compact('laureats', 'etatNote'));
     }
     
-
     public function getLaureatDetails($id)
-{
-    try {
-        // Log pour débogage
-        Log::info('Début getLaureatDetails', ['id' => $id]);
+    {
+        try {
+            // Log pour débogage
+            Log::info('Début getLaureatDetails', ['id' => $id]);
 
-        // Récupérer le lauréat avec ses relations
-        $laureat = DB::table('laureats')
-            ->join('dossier_candidatures', 'laureats.candidature_id', '=', 'dossier_candidatures.id')
-            ->join('structures', 'dossier_candidatures.id_structure', '=', 'structures.id')
-            ->leftJoin('secteur_toucher', 'dossier_candidatures.id', '=', 'secteur_toucher.id_candidature')
-            ->leftJoin('secteur_interventions', 'secteur_toucher.id_secteur', '=', 'secteur_interventions.id')
-            ->where('laureats.id', $id)
-            ->select(
-                'laureats.*',
-                'dossier_candidatures.intitule_activite',
-                'dossier_candidatures.note_finale',
-                'structures.nom_structure',
-                'secteur_interventions.designation_secteur as secteur',
-                DB::raw('(SELECT COUNT(DISTINCT id_evaluateur) FROM notes WHERE id_candidature = dossier_candidatures.id) as nb_evaluateurs')
-            )
-            ->first();
+            // Récupérer le lauréat avec ses relations
+            $laureat = DB::table('laureats')
+                ->join('dossier_candidatures', 'laureats.candidature_id', '=', 'dossier_candidatures.id')
+                ->join('structures', 'dossier_candidatures.id_structure', '=', 'structures.id')
+                ->leftJoin('secteur_toucher', 'dossier_candidatures.id', '=', 'secteur_toucher.id_candidature')
+                ->leftJoin('secteur_interventions', 'secteur_toucher.id_secteur', '=', 'secteur_interventions.id')
+                ->where('laureats.id', $id)
+                ->select(
+                    'laureats.*',
+                    'dossier_candidatures.intitule_activite',
+                    'dossier_candidatures.note_finale',
+                    'structures.nom_structure',
+                    'secteur_interventions.designation_secteur as secteur',
+                    DB::raw('(SELECT COUNT(DISTINCT id_evaluateur) FROM notes WHERE id_candidature = dossier_candidatures.id) as nb_evaluateurs')
+                )
+                ->first();
 
-        if (!$laureat) {
+            if (!$laureat) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lauréat non trouvé'
+                ], 404);
+            }
+
+            // Récupérer les notes moyennes par critère
+            $notes = DB::table('notes')
+                ->join('criteres', 'notes.id_critere', '=', 'criteres.id')
+                ->where('notes.id_candidature', $laureat->candidature_id)
+                ->groupBy('criteres.id', 'criteres.designation', 'criteres.coefficient')
+                ->select(
+                    'criteres.designation as critere',
+                    'criteres.coefficient',
+                    DB::raw('AVG(notes.note_critere) as note_moyenne'),
+                    DB::raw('AVG(notes.note_critere * criteres.coefficient) as total_points')
+                )
+                ->get();
+
+            $response = [
+                'success' => true,
+                'laureat' => [
+                    'nom_structure' => $laureat->nom_structure,
+                    'intitule_activite' => $laureat->intitule_activite,
+                    'secteur' => $laureat->secteur ?? 'Non spécifié',
+                    'note_finale' => $laureat->note_finale,
+                    'rang' => $laureat->rang,
+                    'nb_evaluateurs' => $laureat->nb_evaluateurs,
+                    'observation_jury' => $laureat->observation_jury
+                ],
+                'notes' => $notes
+            ];
+
+            Log::info('Réponse préparée', $response);
+
+            return response()->json($response);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur dans getLaureatDetails', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Lauréat non trouvé'
-            ], 404);
+                'message' => 'Une erreur est survenue: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Récupérer les notes moyennes par critère
-        $notes = DB::table('notes')
-            ->join('criteres', 'notes.id_critere', '=', 'criteres.id')
-            ->where('notes.id_candidature', $laureat->candidature_id)
-            ->groupBy('criteres.id', 'criteres.designation', 'criteres.coefficient')
-            ->select(
-                'criteres.designation as critere',
-                'criteres.coefficient',
-                DB::raw('AVG(notes.note_critere) as note_moyenne'),
-                DB::raw('AVG(notes.note_critere * criteres.coefficient) as total_points')
-            )
-            ->get();
-
-        $response = [
-            'success' => true,
-            'laureat' => [
-                'nom_structure' => $laureat->nom_structure,
-                'intitule_activite' => $laureat->intitule_activite,
-                'secteur' => $laureat->secteur ?? 'Non spécifié',
-                'note_finale' => $laureat->note_finale,
-                'rang' => $laureat->rang,
-                'nb_evaluateurs' => $laureat->nb_evaluateurs,
-                'observation_jury' => $laureat->observation_jury
-            ],
-            'notes' => $notes
-        ];
-
-        Log::info('Réponse préparée', $response);
-
-        return response()->json($response);
-
-    } catch (\Exception $e) {
-        Log::error('Erreur dans getLaureatDetails', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Une erreur est survenue: ' . $e->getMessage()
-        ], 500);
     }
-}
+    
     /**
-     * Récupère les détails d'une candidature spécifique.
+     * Récupère les détails d'une candidature spécifique.
      */
     public function getCandidatureDetails($id)
     {   
@@ -432,10 +468,8 @@ class EvaluatorController extends Controller
             ]);
         }
 
-        return response()->json(['message' => 'Candidature non trouvée'], 404);
+        return response()->json(['message' => 'Candidature non trouvée'], 404);
     }
-
-
 
     public function valider(Request $request)
     {
@@ -461,9 +495,6 @@ class EvaluatorController extends Controller
         }
     }
     
-
-
-
     public function rejeter(Request $request)
     {
         try {
@@ -477,7 +508,6 @@ class EvaluatorController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
-    
     
     public function enregistrerNote(Request $request)
     {
@@ -565,12 +595,6 @@ class EvaluatorController extends Controller
         }
     }
 
-
-
- 
-
-
-
     public function filtre(Request $request)
     {
         $query = DossierCandidature::query();
@@ -591,8 +615,8 @@ class EvaluatorController extends Controller
     
         // Cloner la requête filtrée pour chaque état
         $candidaturesEnAttente = $query->clone()->where('etat', 'en_attente')->paginate(10);
-        $candidaturesValidees = $query->clone()->where('etat', 'validé')->paginate(10);
-        $candidaturesRejetees = $query->clone()->where('etat', 'rejeté')->paginate(10);
+        $candidaturesValidees = $query->clone()->where('etat', 'validé')->paginate(10);
+        $candidaturesRejetees = $query->clone()->where('etat', 'rejeté')->paginate(10);
         
         $criteres = Critere::all();
     
@@ -625,259 +649,250 @@ class EvaluatorController extends Controller
         ));
     }
     
-
-public function restaurerCandidature($id)
-{
-    if (!Auth::check()) {
-        return response()->json(['message' => 'Utilisateur non authentifié'], 403);
-    }
-
-    if (Auth::user()->role !== 'DMIF') {
-        return response()->json(['message' => 'Accès refusé'], 403);
-    }
-
-    try {
-        $candidature = DossierCandidature::findOrFail($id);
-        $candidature->etat = 'en_attente';
-        $candidature->save();
-
-        return response()->json(['success' => true, 'message' => 'Candidature restaurée avec succès !']);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
-    }
-}
-
-public function showValidationModal($id)
-{
-    try {
-        $candidature = DossierCandidature::with([
-            'notes' => function($query) {
-                $query->with(['critere', 'evaluateur.user']);
-            },
-            'structure'
-        ])->findOrFail($id);
-
-        // Récupérer tous les critères
-        $criteres = Critere::orderBy('id')->get()->mapWithKeys(function($critere) {
-            return [$critere->id => [
-                'designation' => $critere->designation,
-                'coefficient' => $critere->coefficient
-            ]];
-        });
-
-        // Grouper les notes par évaluateur
-        $evaluateursNotes = [];
-        $totalGlobal = 0; // Somme totale de toutes les notes
-
-        foreach ($candidature->notes as $note) {
-            if (!$note->evaluateur || !$note->evaluateur->user) continue;
-
-            $evaluateurId = $note->evaluateur->id;
-            if (!isset($evaluateursNotes[$evaluateurId])) {
-                $evaluateursNotes[$evaluateurId] = [
-                    'nom' => $note->evaluateur->user->name,
-                    'notes' => [],
-                    'total' => 0,
-                    'observation' => $note->observation,
-                    'date' => $note->updated_at->format('d/m/Y')
-                ];
-            }
-
-            if ($note->critere) {
-                // Stocker la note brute
-                $evaluateursNotes[$evaluateurId]['notes'][$note->critere->id] = $note->note_critere;
-                // Calculer le total pondéré pour cet évaluateur
-                $evaluateursNotes[$evaluateurId]['total'] += ($note->note_critere * $note->critere->coefficient);
-            }
+    public function restaurerCandidature($id)
+    {
+        if (!Auth::check()) {
+            return response()->json(['message' => 'Utilisateur non authentifié'], 403);
         }
 
-        // Calculer la somme totale de tous les évaluateurs
-        foreach ($evaluateursNotes as $evaluateur) {
-            $totalGlobal += $evaluateur['total'];
+        if (Auth::user()->role !== 'DMIF') {
+            return response()->json(['message' => 'Accès refusé'], 403);
         }
 
-        return response()->json([
-            'success' => true,
-            'evaluateurNotes' => array_values($evaluateursNotes),
-            'criteres' => $criteres,
-            'candidature' => [
-                'nom_structure' => $candidature->structure->nom_structure ?? 'N/A',
-                'activite' => $candidature->intitule_activite ?? 'N/A',
-                'note_totale' => $totalGlobal // Somme totale au lieu de la moyenne
-            ]
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Erreur dans showValidationModal:', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Une erreur est survenue: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-
-
-
-public function juryValidation(Request $request)
-{
-    try {
-        // Validation des données
-        $request->validate([
-            'candidature_id' => 'required|exists:dossier_candidatures,id',
-            'status' => 'required|in:valide,revision,rejete',
-            'observation_jury' => 'nullable|string',
-            'moyenne_finale' => 'nullable|numeric' // Validation de la moyenne finale
-        ]);
-
-        DB::beginTransaction();
-
-        // Récupérer la candidature
-        $candidature = DossierCandidature::find($request->candidature_id);
-
-        // Si la candidature est validée
-        if ($request->status === 'valide') {
-            $candidature->etat = 'terminé';  // Mettre l'état à 'validé'
-            $candidature->note_finale = $request->moyenne_finale;  // Enregistrer la moyenne finale
+        try {
+            $candidature = DossierCandidature::findOrFail($id);
+            $candidature->etat = 'en_attente';
             $candidature->save();
 
-            // Ajouter ou mettre à jour le lauréat
-            $laureat = Laureat::updateOrCreate(
-                ['candidature_id' => $request->candidature_id],
-                [
-                    'date_selection' => now(),
-                    'observation_jury' => $request->observation_jury
+            return response()->json(['success' => true, 'message' => 'Candidature restaurée avec succès !']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Erreur: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function showValidationModal($id)
+    {
+        try {
+            $candidature = DossierCandidature::with([
+                'notes' => function($query) {
+                    $query->with(['critere', 'evaluateur.user']);
+                },
+                'structure'
+            ])->findOrFail($id);
+
+            // Récupérer tous les critères
+            $criteres = Critere::orderBy('id')->get()->mapWithKeys(function($critere) {
+                return [$critere->id => [
+                    'designation' => $critere->designation,
+                    'coefficient' => $critere->coefficient
+                ]];
+            });
+
+            // Grouper les notes par évaluateur
+            $evaluateursNotes = [];
+            $totalGlobal = 0; // Somme totale de toutes les notes
+
+            foreach ($candidature->notes as $note) {
+                if (!$note->evaluateur || !$note->evaluateur->user) continue;
+
+                $evaluateurId = $note->evaluateur->id;
+                if (!isset($evaluateursNotes[$evaluateurId])) {
+                    $evaluateursNotes[$evaluateurId] = [
+                        'nom' => $note->evaluateur->user->name,
+                        'notes' => [],
+                        'total' => 0,
+                        'observation' => $note->observation,
+                        'date' => $note->updated_at->format('d/m/Y')
+                    ];
+                }
+
+                if ($note->critere) {
+                    // Stocker la note brute
+                    $evaluateursNotes[$evaluateurId]['notes'][$note->critere->id] = $note->note_critere;
+                    // Calculer le total pondéré pour cet évaluateur
+                    $evaluateursNotes[$evaluateurId]['total'] += ($note->note_critere * $note->critere->coefficient);
+                }
+            }
+
+            // Calculer la somme totale de tous les évaluateurs
+            foreach ($evaluateursNotes as $evaluateur) {
+                $totalGlobal += $evaluateur['total'];
+            }
+
+            return response()->json([
+                'success' => true,
+                'evaluateurNotes' => array_values($evaluateursNotes),
+                'criteres' => $criteres,
+                'candidature' => [
+                    'nom_structure' => $candidature->structure->nom_structure ?? 'N/A',
+                    'activite' => $candidature->intitule_activite ?? 'N/A',
+                    'note_totale' => $totalGlobal // Somme totale au lieu de la moyenne
                 ]
-            );
+            ]);
 
-            // Mettre à jour les rangs
-            $this->updateRanks();
+        } catch (\Exception $e) {
+            Log::error('Erreur dans showValidationModal:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
-        // Vérifier si toutes les notes sont validées pour passer à "terminé"
-        $allNotesValidated = Note::where('id_candidature', $request->candidature_id)
-            ->where('etat_note', '!=', 'validé')  // Vérifie s'il existe des notes non validées
-            ->exists();  // Si une note n'est pas validée, exists() renvoie true, sinon false
+    public function juryValidation(Request $request)
+    {
+        try {
+            // Validation des données
+            $request->validate([
+                'candidature_id' => 'required|exists:dossier_candidatures,id',
+                'status' => 'required|in:valide,revision,rejete',
+                'observation_jury' => 'nullable|string',
+                'moyenne_finale' => 'nullable|numeric' // Validation de la moyenne finale
+            ]);
 
-        // Si toutes les notes sont validées, mettre l'état à "terminé"
-        if (!$allNotesValidated) {  // Toutes les notes sont validées
-            $candidature->etat = 'terminé';  // Mise à jour de l'état
-            $candidature->save();  // Sauvegarder la mise à jour
+            DB::beginTransaction();
+
+            // Récupérer la candidature
+            $candidature = DossierCandidature::find($request->candidature_id);
+
+            // Si la candidature est validée
+            if ($request->status === 'valide') {
+                $candidature->etat = 'terminé';  // Mettre l'état à 'validé'
+                $candidature->note_finale = $request->moyenne_finale;  // Enregistrer la moyenne finale
+                $candidature->save();
+
+                // Ajouter ou mettre à jour le lauréat
+                $laureat = Laureat::updateOrCreate(
+                    ['candidature_id' => $request->candidature_id],
+                    [
+                        'date_selection' => now(),
+                        'observation_jury' => $request->observation_jury
+                    ]
+                );
+
+                // Mettre à jour les rangs
+                $this->updateRanks();
+            }
+
+            // Vérifier si toutes les notes sont validées pour passer à "terminé"
+            $allNotesValidated = Note::where('id_candidature', $request->candidature_id)
+                ->where('etat_note', '!=', 'validé')  // Vérifie s'il existe des notes non validées
+                ->exists();  // Si une note n'est pas validée, exists() renvoie true, sinon false
+
+            // Si toutes les notes sont validées, mettre l'état à "terminé"
+            if (!$allNotesValidated) {  // Toutes les notes sont validées
+                $candidature->etat = 'terminé';  // Mise à jour de l'état
+                $candidature->save();  // Sauvegarder la mise à jour
+            }
+
+            DB::commit();  // Valider la transaction
+
+            return response()->json([
+                'success' => true,
+                'message' => 'La décision a été enregistrée avec succès',
+                'note_finale' => $candidature->note_finale
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();  // Annuler la transaction en cas d'erreur
+            Log::error('Erreur dans juryValidation:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue: ' . $e->getMessage()
+            ], 500);
         }
-
-        DB::commit();  // Valider la transaction
-
-        return response()->json([
-            'success' => true,
-            'message' => 'La décision a été enregistrée avec succès',
-            'note_finale' => $candidature->note_finale
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();  // Annuler la transaction en cas d'erreur
-        Log::error('Erreur dans juryValidation:', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Une erreur est survenue: ' . $e->getMessage()
-        ], 500);
     }
-}
 
+    private function updateRanks()
+    {
+        $laureats = Laureat::join('dossier_candidatures', 'laureats.candidature_id', '=', 'dossier_candidatures.id')
+            ->whereNotNull('dossier_candidatures.note_finale')
+            ->orderByDesc('dossier_candidatures.note_finale')
+            ->select('laureats.id', 'laureats.candidature_id')
+            ->get();
 
-
-private function updateRanks()
-{
-    $laureats = Laureat::join('dossier_candidatures', 'laureats.candidature_id', '=', 'dossier_candidatures.id')
-        ->whereNotNull('dossier_candidatures.note_finale')
-        ->orderByDesc('dossier_candidatures.note_finale')
-        ->select('laureats.id', 'laureats.candidature_id')
-        ->get();
-
-    foreach ($laureats as $index => $laureat) {
-        Laureat::where('id', $laureat->id)->update(['rang' => $index + 1]);
+        foreach ($laureats as $index => $laureat) {
+            Laureat::where('id', $laureat->id)->update(['rang' => $index + 1]);
+        }
     }
-}
 
-/**
- * Télécharger un fichier spécifique (dans le contexte d'un évaluateur)
- */
-public function telechargerFichier($type, $filename)
-{
-    // Vérifier si l'utilisateur est connecté
-    if (!Auth::check()) {
-        return redirect()->route('login');
-    }
-    
-    Log::info("Tentative de téléchargement par un évaluateur: Type=$type, Filename=$filename");
-    
-    // Vérifier si le type est valide
-    if (!in_array($type, ['ninea', 'rapport', 'rccm', 'agrement', 'decret', 'quitus'])) {
-        abort(404, 'Type de document non valide');
-    }
-    
-    // Différent du code du StructController - En tant qu'évaluateur, 
-    // nous avons juste besoin d'accéder directement au fichier
-    
-    // Tenter de trouver le fichier directement
-    if (Storage::disk('public')->exists('documents/' . basename($filename))) {
-        $path = storage_path('app/public/documents/' . basename($filename));
-        return response()->download($path);
-    }
-    
-    // Le fichier n'a pas été trouvé, cherchons un fichier similaire
-    $requestedBase = strtolower(pathinfo(basename($filename), PATHINFO_FILENAME));
-    $extension = strtolower(pathinfo(basename($filename), PATHINFO_EXTENSION));
-    
-    $files = Storage::disk('public')->files('documents');
-    foreach ($files as $file) {
-        $fileBase = strtolower(pathinfo(basename($file), PATHINFO_FILENAME));
-        $fileExt = strtolower(pathinfo(basename($file), PATHINFO_EXTENSION));
+    /**
+     * Télécharger un fichier spécifique (dans le contexte d'un évaluateur)
+     */
+    public function telechargerFichier($type, $filename)
+    {
+        // Vérifier si l'utilisateur est connecté
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
         
-        // Si l'extension correspond et le début du nom est similaire
-        if ($fileExt == $extension && strpos($fileBase, substr($requestedBase, 0, 5)) === 0) {
-            $filePath = storage_path('app/public/' . $file);
+        Log::info("Tentative de téléchargement par un évaluateur: Type=$type, Filename=$filename");
         
-            if (file_exists($filePath)) {
-                return response()->download($filePath);
+        // Vérifier si le type est valide
+        if (!in_array($type, ['ninea', 'rapport', 'rccm', 'agrement', 'decret', 'quitus'])) {
+            abort(404, 'Type de document non valide');
+        }
+        
+        // Différent du code du StructController - En tant qu'évaluateur, 
+        // nous avons juste besoin d'accéder directement au fichier
+        
+        // Tenter de trouver le fichier directement
+        if (Storage::disk('public')->exists('documents/' . basename($filename))) {
+            $path = storage_path('app/public/documents/' . basename($filename));
+            return response()->download($path);
+        }
+        
+        // Le fichier n'a pas été trouvé, cherchons un fichier similaire
+        $requestedBase = strtolower(pathinfo(basename($filename), PATHINFO_FILENAME));
+        $extension = strtolower(pathinfo(basename($filename), PATHINFO_EXTENSION));
+        
+        $files = Storage::disk('public')->files('documents');
+        foreach ($files as $file) {
+            $fileBase = strtolower(pathinfo(basename($file), PATHINFO_FILENAME));
+            $fileExt = strtolower(pathinfo(basename($file), PATHINFO_EXTENSION));
+            
+            // Si l'extension correspond et le début du nom est similaire
+            if ($fileExt == $extension && strpos($fileBase, substr($requestedBase, 0, 5)) === 0) {
+                $filePath = storage_path('app/public/' . $file);
+            
+                if (file_exists($filePath)) {
+                    return response()->download($filePath);
+                }
             }
         }
+        
+        // Si le fichier n'a pas été trouvé après toutes les vérifications
+        abort(404, 'Le fichier demandé n\'a pas été trouvé sur le serveur.');
     }
-    
-    // Si le fichier n'a pas été trouvé après toutes les vérifications
-    abort(404, 'Le fichier demandé n\'a pas été trouvé sur le serveur.');
-}
 
+    public function publierNotes()
+    {
+        // Vérifier si l'état est déjà 'en_attente' avant de mettre à jour
+        $etatNote = DB::table('notes')->where('etat_note', 'en attente')->exists();
 
-public function publierNotes()
-{
-    // Vérifier si l'état est déjà 'en_attente' avant de mettre à jour
-    $etatNote = DB::table('notes')->where('etat_note', 'en_attente')->exists();
+        if ($etatNote) {
+            // Mettre à jour l'état de toutes les notes en 'publié'
+            DB::table('notes')
+                ->where('etat_note', 'en attente')
+                ->update(['etat_note' => 'publié']);
 
-    if ($etatNote) {
-        // Mettre à jour l'état de toutes les notes en 'publié'
-        DB::table('notes')
-            ->where('etat_note', 'en_attente')
-            ->update(['etat_note' => 'publié']);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'La liste a été publiée avec succès.'
-        ]);
-    } else {
-        return response()->json([
-            'success' => false,
-            'message' => 'L\'état des notes est déjà publié.'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'La liste a été publiée avec succès.'
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'L\'état des notes est déjà publié.'
+            ]);
+        }
     }
-}
-
-
 }

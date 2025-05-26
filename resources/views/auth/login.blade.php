@@ -1,24 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-  <!-- Font Awesome -->
+  <meta charset="UTF-8">
+  <title>Connexion</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
-    /* Responsive pour les petits écrans */
-    @media (max-width: 576px) {
-      .modal-dialog {
-        max-width: 90%;
-      }
-    }
-
-
-    /* Style pour les cubes animés */
-    .loading-cubes {
+    body {
+      background-image: url('{{ asset('assets/img/hero-carousel/hero-carousel-1.png') }}'); /* mets le bon chemin ici */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      height: 100vh;
       display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  
+    .container-login {
+  width: 450px;
+  padding: 25px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+  
+    .loading-cubes {
+      display: none;
       justify-content: center;
       align-items: center;
       gap: 5px;
+      margin-top: 10px;
     }
-
+  
     .loading-cube {
       width: 20px;
       height: 20px;
@@ -26,149 +42,89 @@
       border-radius: 5px;
       animation: bounce 0.6s infinite alternate;
     }
-
-    .loading-cube:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .loading-cube:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
-    /* Animation pour les cubes */
+  
+    .loading-cube:nth-child(2) { animation-delay: 0.2s; }
+    .loading-cube:nth-child(3) { animation-delay: 0.4s; }
+  
     @keyframes bounce {
-      0% {
-        transform: translateY(0);
-      }
-      100% {
-        transform: translateY(-15px);
-      }
-    }
-    
-    /* Masquer les cubes au départ */
-    .loading-cubes {
-      display: none;
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-15px); }
     }
   </style>
+  
 </head>
+<body class="bg-light">
 
-<!-- Login Modal -->
-<div class="modal fade {{ session('open_modal') ? 'show' : '' }}" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-  
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <!-- Header -->
-      <div class="modal-header position-relative">
-        <img src="{{ asset('images/logo.png') }}" alt="Logo" style="height: 40px;">
-        <div class="position-absolute w-100 text-center">
-          <h5 class="modal-title" id="loginModalLabel"><strong>CONNEXION</strong></h5>
-        </div>
-        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+  <div class="container-login bg-white">
+    <div class="modal-header position-relative">
+      <img src="{{ asset('images/logo.png') }}" alt="Logo" style="height: 40px;">
+      <div class="position-absolute w-100 text-center">
+        <h5 class="modal-title" id="loginModalLabel"><strong>CONNEXION</strong></h5>
       </div>
-
-      <!-- Body -->
-      <div class="modal-body">
-        <form id="loginForm" action="{{ route('handleLogin') }}" method="POST">
-          @csrf <!-- Protection contre les attaques CSRF -->
-          @if(session('error_msg'))
-            <div class="alert alert-danger">
-              {{ session('error_msg') }}
-            </div>
-          @endif
-          <!-- Afficher le message d'erreur si disponible -->
-          {{-- @include('components.error-message') --}}
-
-          <div class="mb-3">
-            <label for="email" class="form-label">Adresse email</label>
-            <input type="email" name="email" class="form-control form-control-sm" id="logEmail" placeholder="Veuillez saisir votre email" required aria-label="Adresse email">
-          </div>
-
-          <div class="mb-3 position-relative">
-            <label for="password" class="form-label">Mot de passe</label>
-            <div class="input-group">
-              <input type="password" name="password" class="form-control form-control-sm" id="logPassword" placeholder="Veuillez saisir votre mot de passe" required aria-label="Mot de passe">
-              <button type="button" class="btn btn-outline-secondary" id="togglePassword" tabindex="-1" style="border-left: none;" aria-pressed="false">
-                <i class="fas fa-eye" id="togglePasswordIcon"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-success" id="logSubmitBtn">Se connecter</button>
-            <!-- Cube de chargement -->
-            <div id="loadingCubes" class="loading-cubes">
-              <div class="loading-cube"></div>
-              <div class="loading-cube"></div>
-              <div class="loading-cube"></div>
-            </div>
-          </div>
-        </form>
-
-        <hr>
-
-        <div class="text-center">
-          <p>Pas encore de compte ? <a href="#registerModal" data-bs-toggle="modal" data-bs-dismiss="modal">Créer un compte</a></p>
-        </div>
-      </div>
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
+
+    <form id="loginForm" action="{{ route('handleLogin') }}" method="POST">
+      @csrf
+
+      @if(session('error_msg'))
+        <div class="alert alert-danger">
+          {{ session('error_msg') }}
+        </div>
+      @endif
+
+      <div class="mb-3">
+        <label for="logEmail" class="form-label">Adresse email</label>
+        <input type="email" name="email" class="form-control" id="logEmail" required placeholder="Entrez votre email">
+      </div>
+
+      <div class="mb-3">
+        <label for="logPassword" class="form-label">Mot de passe</label>
+        <div class="input-group">
+          <input type="password" name="password" class="form-control" id="logPassword" required placeholder="Entrez votre mot de passe">
+          <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+            <i class="fas fa-eye" id="togglePasswordIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="d-grid">
+        <button type="submit" class="btn btn-success" id="logSubmitBtn">Se connecter</button>
+      </div>
+
+      <div id="loadingCubes" class="loading-cubes">
+        <div class="loading-cube"></div>
+        <div class="loading-cube"></div>
+        <div class="loading-cube"></div>
+      </div>
+    </form>
+
+    <hr>
+  
   </div>
-</div>
 
-<script>
-  // Cacher ou afficher le mot de passe et changer l'icône
-  document.getElementById('togglePassword').addEventListener('click', function () {
-    const passwordField = document.getElementById('logPassword');
-    const passwordIcon = document.getElementById('togglePasswordIcon');
-    const toggleButton = document.getElementById('togglePassword');
+  <script>
+    // Toggle visibilité du mot de passe
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const passwordField = document.getElementById('logPassword');
+      const icon = document.getElementById('togglePasswordIcon');
 
-    // Toggle le type du champ de mot de passe
-    if (passwordField.type === 'password') {
-      passwordField.type = 'text';
-      passwordIcon.classList.remove('fa-eye');
-      passwordIcon.classList.add('fa-eye-slash'); // Modifier l'icône pour 'mot de passe visible'
-      toggleButton.setAttribute('aria-pressed', 'true'); // Indiquer que le mot de passe est visible
-    } else {
-      passwordField.type = 'logPassword';
-      passwordIcon.classList.remove('fa-eye-slash');
-      passwordIcon.classList.add('fa-eye'); // Remettre l'icône pour 'mot de passe caché'
-      toggleButton.setAttribute('aria-pressed', 'false'); // Indiquer que le mot de passe est caché
-    }
-  });
-
-  // Afficher le modal si la session est définie
-  @if(session('open_modal'))
-    document.addEventListener('DOMContentLoaded', function () {
-      const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-      loginModal.show(); // Ouvre le modal
+      if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        passwordField.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
     });
-  @endif
 
-  // Afficher ou masquer les cubes animés lors de la soumission du formulaire
-  document.getElementById('loginForm').addEventListener('submit', function(event) {
-    const submitButton = document.getElementById('logSubmitBtn');
-    const loadingCubes = document.getElementById('loadingCubes');
-
-    // Désactiver le bouton de soumission
-    submitButton.disabled = true;
-    // Afficher les cubes
-    loadingCubes.style.display = 'flex';
-  });
-  
-  
-</script>
-<script>
-  // Lors de la fermeture du modal de connexion, ne pas supprimer la couche sombre immédiatement
-  $('#loginModal').on('hidden.bs.modal', function () {
-    // Vérifie si le modal d'inscription est ouvert
-    if (!$('#registerModal').hasClass('show')) {
-      // Si le modal d'inscription est fermé, on enlève la couche sombre
-      $('body').removeClass('modal-open');
-      $('.modal-backdrop').remove();
-    }
-  });
-
-  // Lors de l'ouverture du modal d'inscription, on ferme le modal de connexion
-  $('#loginModal').on('hide.bs.modal', function () {
-    $('#registerModal').modal('show');  // Ouvre le modal d'inscription
-  });
-</script>
+    // Affiche les cubes au clic sur "Se connecter"
+    document.getElementById('loginForm').addEventListener('submit', function () {
+      const submitBtn = document.getElementById('logSubmitBtn');
+      const loadingCubes = document.getElementById('loadingCubes');
+      submitBtn.disabled = true;
+      loadingCubes.style.display = 'flex';
+    });
+  </script>
+</body>
+</html>

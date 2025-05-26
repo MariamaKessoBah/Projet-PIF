@@ -42,7 +42,7 @@ class WelcomeUserNotification extends Notification
             ->line('🎊 Félicitations ! Vous venez de rejoindre la plateforme du **Prix du Ministre de la Microfinance et de l\'Économie Sociale et Solidaire pour la Promotion de l\'Inclusion Financière**.')
             ->line('🚀 Nous sommes ravis de vous accueillir parmi nous et espérons que votre expérience sera enrichissante et inspirante.')
             ->line('💡 N\'hésitez pas à explorer la plateforme, découvrir les opportunités et soumettre votre candidature.')
-            ->action('✨ Accéder à mon compte', url('/'))
+            ->action('✨ Accéder à mon compte', url('/login'))
             ->line('📩 Une question ? Besoin d\'aide ? Contactez notre équipe de support à l\'adresse suivante : prixmmess@microfinance-ess.gouv.sn.')
             ->line('🙏 Merci de votre confiance et bienvenue dans la communauté PIF !')
             ->salutation('À très bientôt,  
@@ -58,7 +58,7 @@ class WelcomeUserNotification extends Notification
     {
         return [
             'message' => 'Bienvenue sur PIF !',
-            'url' => url('/'),
+            'url' => url('/login'),
         ];
     }
 }

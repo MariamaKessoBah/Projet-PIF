@@ -3,6 +3,7 @@
 @section('title', 'Enregistrer Evaluateur')
 
 @section('content')
+<!-- Style global -->
 <style>
     .form-control.glow:focus {
         box-shadow: 0 0 10px rgba(13, 110, 253, 0.8);
@@ -37,6 +38,7 @@
         </div>
     </div>
 
+    <!-- Gestion des messages de succès ou d'erreur -->
     @if(session('success'))
         <script>
             Swal.fire({
@@ -55,12 +57,14 @@
         </script>
     @endif
 
+    <!-- Bouton d'ajout d'évaluateur -->
     <div class="d-flex justify-content-end mb-3">
         <a href="{{ route('registerEvaluator') }}" class="btn btn-success btn-glow">
             <i class="fas fa-plus me-2"></i> Ajouter un évaluateur
         </a>
     </div>
 
+    <!-- Tableau des évaluateurs -->
     <section class="content">
         <div class="container-fluid">
             <div class="col-lg-12">
@@ -87,10 +91,12 @@
                                         <td>{{ $evaluateur->tel }}</td>
                                         <td class="text-center">
                                             <div class="d-flex justify-content-center gap-3">
+                                                <!-- Bouton pour modifier l'évaluateur -->
                                                 <button type="button" class="btn btn-outline-warning btn-sm btn-glow" data-bs-toggle="modal" data-bs-target="#editModal{{ $evaluateur->id }}">
                                                     <i class="fas fa-pen"></i>
                                                 </button>
 
+                                                <!-- Formulaire pour supprimer l'évaluateur -->
                                                 <form action="{{ route('deleteEvaluator', $evaluateur->id) }}" method="POST" class="form-delete">
                                                     @csrf
                                                     @method('DELETE')
@@ -99,55 +105,6 @@
                                                     </button>
                                                 </form>
                                             </div>
-
-                                            <!-- Modal de modification -->
-                                            <div class="modal fade" id="editModal{{ $evaluateur->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $evaluateur->id }}" aria-hidden="true">
-                                                <div class="modal-dialog modal-lg">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title" id="editModalLabel{{ $evaluateur->id }}">Modifier l'évaluateur</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <form action="{{ route('editEvaluator', $evaluateur->id) }}" method="POST">
-                                                            @csrf
-                                                            @method('PUT')
-                                                            <div class="modal-body">
-                                                                <div class="form-row">
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label for="name{{ $evaluateur->id }}" class="form-label">Nom</label>
-                                                                        <input type="text" class="form-control glow" id="name{{ $evaluateur->id }}" name="name" value="{{ $evaluateur->user->name }}" required>
-                                                                    </div>
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label for="email{{ $evaluateur->id }}" class="form-label">Email</label>
-                                                                        <input type="email" class="form-control glow" id="email{{ $evaluateur->id }}" name="email" value="{{ $evaluateur->user->email }}" required>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="form-row">
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label for="structure{{ $evaluateur->id }}" class="form-label">Structure</label>
-                                                                        <input type="text" class="form-control glow" id="structure{{ $evaluateur->id }}" name="structure" value="{{ $evaluateur->structure }}">
-                                                                    </div>
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label for="fonction{{ $evaluateur->id }}" class="form-label">Fonction</label>
-                                                                        <input type="text" class="form-control glow" id="fonction{{ $evaluateur->id }}" name="fonction" value="{{ $evaluateur->fonction }}">
-                                                                    </div>
-                                                                </div>
-                                                                <div class="form-row">
-                                                                    <div class="col-md-6 mb-3">
-                                                                        <label for="tel{{ $evaluateur->id }}" class="form-label">Téléphone</label>
-                                                                        <input type="text" class="form-control glow" id="tel{{ $evaluateur->id }}" name="tel" value="{{ $evaluateur->tel }}">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                                <button type="submit" class="btn btn-primary btn-glow">Mettre à jour</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-
                                         </td>
                                     </tr>
                                 @empty
@@ -164,7 +121,60 @@
     </section>
 </div>
 
-<!-- Script pour confirmation SweetAlert2 -->
+<!-- Modals de modification de l'évaluateur -->
+@foreach($evaluateurs as $evaluateur)
+    <div class="modal fade" id="editModal{{ $evaluateur->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $evaluateur->id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form action="{{ route('updateEvaluator', $evaluateur->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel{{ $evaluateur->id }}">Modifier l'évaluateur</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Colonne gauche -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="name{{ $evaluateur->id }}" class="form-label">Nom</label>
+                                    <input type="text" class="form-control glow" id="name{{ $evaluateur->id }}" name="name" value="{{ $evaluateur->user->name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email{{ $evaluateur->id }}" class="form-label">Email</label>
+                                    <input type="email" class="form-control glow" id="email{{ $evaluateur->id }}" name="email" value="{{ $evaluateur->user->email }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="tel{{ $evaluateur->id }}" class="form-label">Téléphone</label>
+                                    <input type="tel" class="form-control" id="tel{{ $evaluateur->id }}" name="tel" value="{{ $evaluateur->tel }}" required>
+                                </div>
+                            </div>
+
+                            <!-- Colonne droite -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="structure{{ $evaluateur->id }}" class="form-label">Structure</label>
+                                    <input type="text" class="form-control" id="structure{{ $evaluateur->id }}" name="structure" value="{{ $evaluateur->structure }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fonction{{ $evaluateur->id }}" class="form-label">Fonction</label>
+                                    <input type="text" class="form-control" id="fonction{{ $evaluateur->id }}" name="fonction" value="{{ $evaluateur->fonction }}" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endforeach
+
+<!-- Script pour la confirmation de suppression avec SweetAlert2 -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const deleteForms = document.querySelectorAll('.form-delete');
@@ -191,5 +201,7 @@
         });
     });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 @endsection

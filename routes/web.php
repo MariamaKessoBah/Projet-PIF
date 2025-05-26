@@ -22,6 +22,17 @@ Route::post('/login', [AuthController::class, 'handleLogin'])->name('handleLogin
 Route::get('/register', [AuthController::class, 'register'])->name('register')->withoutMiddleware(['auth']);
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
+// Routes pour la définition du mot de passe des évaluateurs (accessibles sans authentification)
+Route::get('/set-password/{token}', [EvaluatorController::class, 'showSetPasswordForm'])
+    ->name('evaluateur.password.set')
+    ->withoutMiddleware(['auth']);
+Route::post('/update-password', [EvaluatorController::class, 'setPassword'])
+    ->name('evaluateur.password.update')
+    ->withoutMiddleware(['auth']);
+
+    Route::get('/logEvalu', [EvaluatorController::class, 'logEvalu'])->name('logEvalu')->withoutMiddleware(['auth']);
+
+
 // Routes protégées par le middleware 'auth'
 Route::middleware('auth')->group(function () {
     // Structure
@@ -56,6 +67,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/evalue', [EvaluatorController::class, 'index'])->name('evalue');  
         Route::get('/registerEvaluator', [EvaluatorController::class, 'evaluateurRegist'])->name('registerEvaluator');  
         Route::get('/editeurEvaluator', [EvaluatorController::class, 'evaluateurEdit'])->name('editEvaluator');
+        Route::post('/updateEvaluator/{id}', [EvaluatorController::class, 'update'])->name('updateEvaluator');
+
         Route::delete('/evaluateurs/{id}', [EvaluatorController::class, 'destroy'])->name('deleteEvaluator');
         
 
