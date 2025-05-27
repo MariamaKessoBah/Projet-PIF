@@ -7,80 +7,180 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
 <main class="main">
-  <style>
-    .dark-background {
-      background-color: #000 !important;
-      color: #fff;
-    }
-  
-    .carousel-container {
-      background-color: transparent !important;
-    }
-  
-    .carousel-item {
-  height: 75vh !important;
+  <style>/* Fond sombre général */
+/* Fond sombre général */
+.dark-background {
+  background-color: #000 !important;
+  color: #fff;
 }
+
+/* Carousel principal */
+#hero-carousel {
+  position: relative;
+}
+
+.carousel-item {
+  height: 100vh;
+  position: relative;
+}
+
 .carousel-item img {
   width: 100% !important;
   height: 100%;
   object-fit: cover !important;
+  display: block;
+  opacity: 1 !important;
+  z-index: 1;
 }
 
+/* Contenu texte sur image */
+.carousel-container {
+  background-color: transparent !important;
+  position: absolute;
+  bottom: 20%;
+  left: 5%;
+  max-width: 90%;
+  z-index: 2;
+  color: white;
+  text-shadow: 1px 1px 2px black;
+}
 
-    /* Responsive pour les petits écrans */
-    @media (max-width: 576px) {
-      .modal-dialog {
-        max-width: 90%;
-      }
-    }
+/* Supprimer les overlays Bootstrap */
+.carousel-item::before,
+.carousel-item::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
 
+/* Contrôles */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  filter: invert(1);
+}
 
-   
+/* Bouton */
+.btn-get-started {
+  background-color: #ff7f50;
+  color: white;
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-weight: 600;
+  margin-top: 15px;
+  text-transform: uppercase;
+  border: none;
+  transition: background-color 0.3s;
+  z-index: 3;
+  position: relative;
+}
+
+/* Barre déroulante info */
+.info-bar {
+  background-color: seagreen;
+  color: #fff;
+  padding: 6px 15px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  width: 100%;
+  z-index: 4;
+}
+
+.scrolling-text {
+  display: inline-block;
+  padding-left: 100%;
+  animation: scroll-text 20s linear infinite;
+}
+
+@keyframes scroll-text {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Responsive : petits écrans */
+@media (max-width: 576px) {
+  .modal-dialog {
+    max-width: 90%;
+  }
+
+  .carousel-item {
+    height: 100vh;
+  }
+
+  .carousel-container {
+    bottom: 15%;
+    font-size: 0.9rem;
+  }
+
+  .carousel-container h2 {
+    font-size: 1.3rem;
+  }
+
+  .carousel-container p {
+    font-size: 0.85rem;
+  }
+
+  .btn-get-started {
+    padding: 8px 18px;
+    font-size: 0.9rem;
+  }
+
+  .info-bar {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+  }
+}
+
   </style>
 
   
   <!-- Hero Section -->
-  <section id="hero" class="hero section dark-background">
-      <div id="hero-carousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+ <!-- Hero Section -->
+<section id="hero" class="hero section dark-background">
+  <div id="hero-carousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
 
-        <div class="carousel-item active">
-          <img src="assets/img/hero-carousel/hero-carousel-2.png" alt="">
-          <div class="carousel-container">
-            <h2>Bienvenue à la plateforme dédiée au Prix de l'Inclusion Financière<br></h2>
-            <p>Un événement majeur célébrant les initiatives et innovations qui renforcent l'accès aux services financiers pour tous.</p>
-            <a href="#registerModal" data-bs-toggle="modal" class="btn-get-started">Participez</a>
-          </div>
-        </div><!-- End Carousel Item -->
-
-        <div class="carousel-item">
-          <img src="assets/img/hero-carousel/hero-carousel-3.png" alt="">
-          <div class="carousel-container">
-            <h2>Participez à une transformation durable</h2>
-            <p>Rejoignez-nous pour honorer les acteurs qui œuvrent à réduire les inégalités grâce à des solutions financières inclusives.</p>
-            <a href="#registerModal" data-bs-toggle="modal" class="btn-get-started">PARTICIPEZ</a>
-          </div>
-        </div><!-- End Carousel Item -->
-        <a class="carousel-control-prev" href="#hero-carousel" role="button" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon bi bi-chevron-left" aria-hidden="true"></span>
-        </a>
-
-        <a class="carousel-control-next" href="#hero-carousel" role="button" data-bs-slide="next">
-          <span class="carousel-control-next-icon bi bi-chevron-right" aria-hidden="true"></span>
-        </a>
-
-        <ol class="carousel-indicators"></ol>
-        
-      <!-- Barre déroulante d'informations -->
-      <div class="info-bar">
-        <div class="scrolling-text">
-          🎉 Nouveaux sur l'inclusion financière! | 🌟 La plateforme du prix du ministère de la microfinance sera opérationnelle bientôt ! | 📞 Contactez-nous au +221 77 123 45 67 pour plus d'informations !
-        </div>
+    <div class="carousel-item active">
+      <img src="assets/img/hero-carousel/hero-carousel-2.png" alt="">
+      <div class="carousel-container">
+        <h2>Bienvenue à la plateforme dédiée au Prix de l'Inclusion Financière<br></h2>
+        <p>Un événement majeur célébrant les initiatives et innovations qui renforcent l'accès aux services financiers pour tous.</p>
+        <a href="#registerModal" data-bs-toggle="modal" class="btn-get-started">Participez</a>
       </div>
+    </div>
 
+    <div class="carousel-item">
+      <img src="assets/img/hero-carousel/hero-carousel-3.png" alt="">
+      <div class="carousel-container">
+        <h2>Participez à une transformation durable</h2>
+        <p>Rejoignez-nous pour honorer les acteurs qui œuvrent à réduire les inégalités grâce à des solutions financières inclusives.</p>
+        <a href="#registerModal" data-bs-toggle="modal" class="btn-get-started">PARTICIPEZ</a>
       </div>
+    </div>
 
+    <a class="carousel-control-prev" href="#hero-carousel" role="button" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon bi bi-chevron-left" aria-hidden="true"></span>
+    </a>
+    <a class="carousel-control-next" href="#hero-carousel" role="button" data-bs-slide="next">
+      <span class="carousel-control-next-icon bi bi-chevron-right" aria-hidden="true"></span>
+    </a>
 
-    </section><!-- /Hero Section -->
+    <ol class="carousel-indicators"></ol>
+  </div>
+
+  <!-- En dehors du carousel -->
+  <div class="info-bar">
+    <div class="scrolling-text">
+      🎉 Nouveaux sur l'inclusion financière! | 🌟 La plateforme du prix du ministère de la microfinance sera opérationnelle bientôt ! | 📞 Contactez-nous au +221 77 123 45 67 pour plus d'informations !
+    </div>
+  </div>
+</section>
+
 
     <!-- Sidebar -->
 <!-- Login Modal -->
