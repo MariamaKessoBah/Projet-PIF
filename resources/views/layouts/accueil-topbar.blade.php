@@ -6,9 +6,13 @@
       
       <!-- Contact Information -->
       <div class="contact-info d-flex align-items-center">
-        <i class="bi bi-envelope d-flex align-items-center">
-          <a href="mailto:contact@example.com">prixmmess@microfinance-ess.gouv.sn</a>
-        </i>
+        <div class="d-flex align-items-center text-black">
+          <i class="bi bi-envelope me-2"></i>
+          <a href="mailto:prixmmess@microfinance-ess.gouv.sn" class="d-inline d-lg-none text-black text-decoration-none">email</a>
+          <a href="mailto:prixmmess@microfinance-ess.gouv.sn" class="d-none d-lg-inline text-black text-decoration-none">prixmmess@microfinance-ess.gouv.sn</a>
+        </div>
+
+        
         <i class="bi bi-phone d-flex align-items-center ms-4">
           <span>(+221) 33 889 80 33</span>
         </i>
@@ -32,8 +36,11 @@
       <a href="{{ route('accueil') }}" class="logo d-flex align-items-center">
         <!-- Uncomment the line below if you also wish to use an image logo -->
         <img src="assets/img/logo.png" alt="">
-        <h1 class="sitename" style="font-size: 20px">Prix de l'inclusion Financière</h1>
-      </a>
+            <strong>
+              <strong class="d-inline d-lg-none text-black">PIF</strong>
+              <strong class="d-none d-lg-inline text-black">Plateforme du Prix de l’Inclusion Financière</strong>
+            </strong>      
+        </a>
 
       <!-- Navigation Menu -->
       <nav id="navmenu" class="navmenu">
